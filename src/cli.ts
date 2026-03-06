@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * fal CLI — Agent-first CLI for fal.ai
+ * falgen — Agent-first CLI for fal.ai
  *
  * Designed for both humans and AI agents. All commands output structured JSON.
- * Agents can discover capabilities via `fal --help --json` and execute any command.
+ * Agents can discover capabilities via `falgen --help --json` and execute any command.
  *
  * Usage:
- *   fal search "text to video"
- *   fal schema fal-ai/flux/dev
- *   fal run fal-ai/flux/dev --prompt "a cat in space"
- *   fal upload ./photo.jpg
- *   fal status fal-ai/flux/dev <request_id>
- *   fal pricing fal-ai/flux/dev
+ *   falgen search "text to video"
+ *   falgen schema fal-ai/flux/dev
+ *   falgen run fal-ai/flux/dev --prompt "a cat in space"
+ *   falgen upload ./photo.jpg
+ *   falgen docs "how to use LoRA"
  */
 
 import { fal } from "@fal-ai/client";
@@ -70,8 +69,8 @@ const MIME_TYPES: Record<string, string> = {
 
 const COMMANDS = {
   search: {
-    description: "Search fal.ai model catalog",
-    usage: "fal search <query> [--category <cat>] [--limit <n>]",
+    description: "Search fal.ai model catalog (600+ models)",
+    usage: "falgen search <query> [--category <cat>] [--limit <n>]",
     args: "<query>",
     options: {
       "--category": "Filter by category (text-to-image, image-to-video, text-to-video, text-to-speech, etc.)",
@@ -79,13 +78,13 @@ const COMMANDS = {
     },
   },
   schema: {
-    description: "Get full input/output schema for a model",
-    usage: "fal schema <endpoint_id>",
+    description: "Get full input/output schema for any model",
+    usage: "falgen schema <endpoint_id>",
     args: "<endpoint_id>",
   },
   run: {
-    description: "Run a model synchronously (waits for result)",
-    usage: "fal run <endpoint_id> [--key value ...]",
+    description: "Run any model (waits for result)",
+    usage: "falgen run <endpoint_id> [--key value ...]",
     args: "<endpoint_id>",
     options: {
       "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
@@ -94,12 +93,12 @@ const COMMANDS = {
   },
   upload: {
     description: "Upload a local file or URL to fal.ai CDN",
-    usage: "fal upload <file_path_or_url>",
+    usage: "falgen upload <file_path_or_url>",
     args: "<file_path_or_url>",
   },
   status: {
     description: "Check job status or get result",
-    usage: "fal status <endpoint_id> <request_id> [--result] [--cancel]",
+    usage: "falgen status <endpoint_id> <request_id> [--result] [--cancel]",
     args: "<endpoint_id> <request_id>",
     options: {
       "--result": "Fetch the completed result",
@@ -108,15 +107,20 @@ const COMMANDS = {
   },
   pricing: {
     description: "Get pricing information for a model",
-    usage: "fal pricing <endpoint_id>",
+    usage: "falgen pricing <endpoint_id>",
     args: "<endpoint_id>",
   },
   models: {
     description: "List models by category",
-    usage: "fal models [--category <cat>]",
+    usage: "falgen models [--category <cat>]",
     options: {
       "--category": "Category to list (text-to-image, image-to-video, etc.)",
     },
+  },
+  docs: {
+    description: "Search fal.ai documentation, guides, and API references",
+    usage: "falgen docs <query>",
+    args: "<query>",
   },
 };
 
@@ -125,9 +129,10 @@ const COMMANDS = {
 function showHelp(asJson: boolean): void {
   if (asJson) {
     output({
-      name: "fal",
+      name: "falgen",
       version: "0.1.0",
       description: "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
+      install: "curl https://falgen.sh/install -fsS | bash",
       env: { FAL_KEY: "Required. Your fal.ai API key from https://fal.ai/dashboard/keys" },
       commands: COMMANDS,
     });
@@ -135,19 +140,20 @@ function showHelp(asJson: boolean): void {
   }
 
   console.log(`
-fal — Agent-first CLI for fal.ai
+falgen — Agent-first CLI for fal.ai
 
 USAGE:
-  fal <command> [args] [options]
+  falgen <command> [args] [options]
 
 COMMANDS:
-  search <query>              Search model catalog
+  search <query>              Search model catalog (600+ models)
   schema <endpoint_id>        Get model input/output schema
-  run <endpoint_id> [inputs]  Run a model (waits for result)
+  run <endpoint_id> [inputs]  Run any model (waits for result)
   upload <file_or_url>        Upload file to fal.ai CDN
   status <endpoint> <req_id>  Check job status / get result
   pricing <endpoint_id>       Get model pricing
   models                      List models by category
+  docs <query>                Search fal.ai documentation
 
 OPTIONS:
   --json    Force JSON output (default for agents)
@@ -157,12 +163,12 @@ ENV:
   FAL_KEY   Required. Your fal.ai API key.
 
 EXAMPLES:
-  fal search "text to video"
-  fal schema fal-ai/flux/dev
-  fal run fal-ai/flux/dev --prompt "a cat in space"
-  fal upload ./photo.jpg
-  fal status fal-ai/flux/dev abc-123 --result
-  fal pricing fal-ai/kling-video/v2.6/pro/image-to-video
+  falgen search "text to video"
+  falgen schema fal-ai/flux/dev
+  falgen run fal-ai/flux/dev --prompt "a cat in space"
+  falgen upload ./photo.jpg
+  falgen status fal-ai/flux/dev abc-123 --result
+  falgen docs "how to upload a file"
 `);
 }
 
@@ -200,7 +206,7 @@ async function cmdSearch(args: string[], flags: Record<string, string>): Promise
 
 async function cmdSchema(args: string[]): Promise<void> {
   const endpointId = args[0];
-  if (!endpointId) error("Usage: fal schema <endpoint_id>");
+  if (!endpointId) error("Usage: falgen schema <endpoint_id>");
 
   const url = new URL(`${PLATFORM_BASE}/models`);
   url.searchParams.set("endpoint_id", endpointId);
@@ -217,7 +223,6 @@ async function cmdSchema(args: string[]): Promise<void> {
   const components = openapi?.components as Record<string, unknown> | undefined;
   const schemas = components?.schemas as Record<string, Record<string, unknown>> | undefined;
 
-  // Schema names vary: "Input", "FluxDevInput", etc. — find by suffix
   let inputSchema: Record<string, unknown> | undefined;
   let outputSchema: Record<string, unknown> | undefined;
   if (schemas) {
@@ -268,17 +273,15 @@ function simplifyProps(schema: Record<string, unknown>): Array<Record<string, un
 
 async function cmdRun(args: string[], flags: Record<string, string>): Promise<void> {
   const endpointId = args[0];
-  if (!endpointId) error("Usage: fal run <endpoint_id> --prompt 'text' [--key value ...]");
+  if (!endpointId) error("Usage: falgen run <endpoint_id> --prompt 'text' [--key value ...]");
 
   configureSDK();
 
-  // Parse input from flags (skip known CLI flags)
   const skipFlags = new Set(["--async", "--json", "--help"]);
   const input: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(flags)) {
     if (skipFlags.has(key)) continue;
     const paramName = key.replace(/^--/, "");
-    // Try to parse as number/boolean/JSON
     input[paramName] = parseValue(value);
   }
 
@@ -290,12 +293,11 @@ async function cmdRun(args: string[], flags: Record<string, string>): Promise<vo
       status: "submitted",
       request_id: result.request_id,
       endpoint_id: endpointId,
-      hint: `Check status: fal status ${endpointId} ${result.request_id}`,
+      hint: `Check status: falgen status ${endpointId} ${result.request_id}`,
     });
     return;
   }
 
-  // Synchronous — subscribe and wait
   const logs: Array<{ message: string; level: string }> = [];
   const result = await fal.subscribe(endpointId, {
     input,
@@ -330,14 +332,13 @@ function parseValue(value: string): unknown {
 
 async function cmdUpload(args: string[]): Promise<void> {
   const target = args[0];
-  if (!target) error("Usage: fal upload <file_path_or_url>");
+  if (!target) error("Usage: falgen upload <file_path_or_url>");
 
   configureSDK();
 
   let cdnUrl: string;
 
   if (target.startsWith("http://") || target.startsWith("https://")) {
-    // URL upload
     const response = await fetch(target);
     if (!response.ok) error(`Failed to fetch ${target}: ${response.status}`);
     const blob = await response.blob();
@@ -345,7 +346,6 @@ async function cmdUpload(args: string[]): Promise<void> {
     const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
     cdnUrl = await fal.storage.upload(file);
   } else {
-    // Local file upload
     const filePath = resolve(target);
     if (!existsSync(filePath)) error(`File not found: ${filePath}`);
     const data = await readFile(filePath);
@@ -364,7 +364,7 @@ async function cmdUpload(args: string[]): Promise<void> {
 async function cmdStatus(args: string[], flags: Record<string, string>): Promise<void> {
   const endpointId = args[0];
   const requestId = args[1];
-  if (!endpointId || !requestId) error("Usage: fal status <endpoint_id> <request_id> [--result] [--cancel]");
+  if (!endpointId || !requestId) error("Usage: falgen status <endpoint_id> <request_id> [--result] [--cancel]");
 
   configureSDK();
 
@@ -398,7 +398,7 @@ async function cmdStatus(args: string[], flags: Record<string, string>): Promise
 
 async function cmdPricing(args: string[]): Promise<void> {
   const endpointId = args[0];
-  if (!endpointId) error("Usage: fal pricing <endpoint_id>");
+  if (!endpointId) error("Usage: falgen pricing <endpoint_id>");
 
   const url = new URL(`${PLATFORM_BASE}/models/pricing`);
   url.searchParams.set("endpoint_id", endpointId);
@@ -415,14 +415,13 @@ async function cmdModels(flags: Record<string, string>): Promise<void> {
   const category = flags["--category"];
 
   if (!category) {
-    // List available categories
     output({
       categories: [
         "text-to-image", "image-to-image", "image-to-video", "text-to-video",
         "video-to-video", "text-to-speech", "speech-to-text", "text-to-music",
         "image-to-3d", "text-to-3d", "image-editing", "training", "llm",
       ],
-      usage: "fal models --category text-to-image",
+      usage: "falgen models --category text-to-image",
     });
     return;
   }
@@ -446,6 +445,50 @@ async function cmdModels(flags: Record<string, string>): Promise<void> {
   });
 
   output({ category, models, count: models.length });
+}
+
+// ─── Command: docs ───────────────────────────────────────────────────
+
+async function cmdDocs(args: string[]): Promise<void> {
+  const query = args.join(" ");
+  if (!query) error("Usage: falgen docs <query>");
+
+  const res = await fetch("https://docs.fal.ai/mcp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "SearchFal", arguments: { query } },
+    }),
+  });
+
+  const text = await res.text();
+  const dataLine = text.split("\n").find((l) => l.startsWith("data: "));
+  if (!dataLine) error("No results from docs search");
+
+  const data = JSON.parse(dataLine.slice(6)) as {
+    result?: { content: Array<{ type: string; text: string }> };
+  };
+
+  if (!data.result?.content) error("No results");
+
+  const results = data.result.content.map((c) => {
+    const titleMatch = c.text.match(/^Title: (.+)/m);
+    const linkMatch = c.text.match(/^Link: (.+)/m);
+    const contentMatch = c.text.match(/^Content: ([\s\S]+)/m);
+    return {
+      title: titleMatch?.[1] || "Untitled",
+      url: linkMatch?.[1] || null,
+      content: contentMatch?.[1]?.trim() || c.text,
+    };
+  });
+
+  output({ query, results, count: results.length });
 }
 
 // ─── Arg parser ──────────────────────────────────────────────────────
@@ -502,12 +545,15 @@ async function main(): Promise<void> {
       case "models":
         await cmdModels(flags);
         break;
+      case "docs":
+        await cmdDocs(args);
+        break;
       case "help":
       case "--help":
         showHelp(isJson);
         break;
       default:
-        error(`Unknown command: ${command}. Run 'fal --help' to see available commands.`);
+        error(`Unknown command: ${command}. Run 'falgen --help' to see available commands.`);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

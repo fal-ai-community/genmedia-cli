@@ -1,19 +1,13 @@
-# fal CLI
+# falgen
 
 Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models.
 
-Designed for both humans and AI agents. All commands output structured JSON.
+Designed for both humans and AI agents. All commands output structured JSON. No MCP required — any agent can use this via shell commands.
 
 ## Install
 
 ```bash
-npm install -g @fal-ai/cli
-```
-
-Or use directly:
-
-```bash
-npx @fal-ai/cli search "text to video"
+npx falgen --help
 ```
 
 ## Setup
@@ -26,76 +20,27 @@ Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys).
 
 ## Commands
 
-### Search models
-
 ```bash
-fal search "text to video"
-fal search "upscale" --category image-to-image
-fal search "flux" --limit 5
-```
-
-### Get model schema
-
-```bash
-fal schema fal-ai/flux/dev
-```
-
-Returns all input parameters and output fields for any model.
-
-### Run a model
-
-```bash
-fal run fal-ai/flux/dev --prompt "a cat in space" --num_images 2
-```
-
-For long-running models (video, 3D), use async mode:
-
-```bash
-fal run fal-ai/kling-video/v2.6/pro/image-to-video --async --prompt "a cat walking" --image_url "https://..."
-```
-
-### Upload files
-
-```bash
-# Local file
-fal upload ./photo.jpg
-
-# Remote URL
-fal upload https://example.com/image.png
-```
-
-Returns a fal.ai CDN URL you can use as input to any model.
-
-### Check job status
-
-```bash
-fal status fal-ai/flux/dev abc-123-request-id
-fal status fal-ai/flux/dev abc-123-request-id --result
-fal status fal-ai/flux/dev abc-123-request-id --cancel
-```
-
-### Get pricing
-
-```bash
-fal pricing fal-ai/flux/dev
-```
-
-### List categories
-
-```bash
-fal models
-fal models --category text-to-image
+falgen search "text to video"                    # Search 600+ models
+falgen schema fal-ai/flux/dev                    # Get input/output params
+falgen run fal-ai/flux/dev --prompt "a cat"      # Run any model
+falgen run fal-ai/veo3.1 --prompt "..." --async  # Submit long job
+falgen upload ./photo.jpg                        # Upload to CDN
+falgen status fal-ai/flux/dev <req_id> --result  # Get job result
+falgen pricing fal-ai/flux/dev                   # Check pricing
+falgen models --category text-to-image           # Browse by category
+falgen docs "how to use LoRA"                    # Search documentation
 ```
 
 ## Agent-first design
 
-Every command outputs structured JSON. Agents can discover all capabilities with:
+Every command outputs structured JSON. Agents discover capabilities with:
 
 ```bash
-fal --help --json
+falgen --help --json
 ```
 
-This returns a machine-readable description of all commands, arguments, and options.
+This returns a machine-readable description of all commands, arguments, and options. Agents that don't support MCP (Codex, OpenClaw, Gemini CLI, etc.) can use fal.ai through `falgen`.
 
 ## License
 
