@@ -1,5 +1,6 @@
 import { defineCommand, runMain } from "citty";
 import { output } from "./lib/output";
+import { VERSION } from "./lib/version";
 
 // JSON help schema for agents — output before citty intercepts --help
 if (
@@ -8,7 +9,7 @@ if (
 ) {
   output({
     name: "falgen",
-    version: "0.1.0",
+    version: VERSION,
     description:
       "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
     install: "curl https://falgen.sh/install -fsS | bash",
@@ -76,6 +77,10 @@ if (
         usage: "falgen docs <query>",
         args: "<query>",
       },
+      version: {
+        description: "Show version and check for updates",
+        usage: "falgen version",
+      },
     },
   });
   process.exit(0);
@@ -84,7 +89,7 @@ if (
 const main = defineCommand({
   meta: {
     name: "falgen",
-    version: "0.1.0",
+    version: VERSION,
     description: "Agent-first CLI for fal.ai",
   },
   subCommands: {
@@ -96,6 +101,7 @@ const main = defineCommand({
     pricing: () => import("./commands/pricing").then((m) => m.default),
     models: () => import("./commands/models").then((m) => m.default),
     docs: () => import("./commands/docs").then((m) => m.default),
+    version: () => import("./commands/version").then((m) => m.default),
   },
 });
 
