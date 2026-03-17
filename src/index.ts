@@ -1,6 +1,9 @@
 import { defineCommand, runMain } from "citty";
+import { loadDotEnv } from "./lib/env";
 import { output } from "./lib/output";
 import { VERSION } from "./lib/version";
+
+loadDotEnv();
 
 // JSON help schema for agents — output before citty intercepts --help
 if (
@@ -15,7 +18,7 @@ if (
     install: "curl https://falgen.sh/install -fsS | bash",
     env: {
       FAL_KEY:
-        "Required. Your fal.ai API key from https://fal.ai/dashboard/keys",
+        "Your fal.ai API key. Can also be set via `falgen setup`. Get one at https://fal.ai/dashboard/keys",
     },
     commands: {
       search: {
@@ -81,6 +84,10 @@ if (
         description: "Show version and check for updates",
         usage: "falgen version",
       },
+      setup: {
+        description: "Configure your fal.ai API key and preferences",
+        usage: "falgen setup",
+      },
     },
   });
   process.exit(0);
@@ -102,6 +109,7 @@ const main = defineCommand({
     models: () => import("./commands/models").then((m) => m.default),
     docs: () => import("./commands/docs").then((m) => m.default),
     version: () => import("./commands/version").then((m) => m.default),
+    setup: () => import("./commands/setup").then((m) => m.default),
   },
 });
 
