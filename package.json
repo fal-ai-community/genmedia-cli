@@ -4,18 +4,33 @@
   "description": "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
   "type": "module",
   "bin": {
-    "falgen": "dist/cli.js"
+    "falgen": "./falgen"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "bun build --compile --minify --bytecode src/index.ts --outfile falgen",
+    "dev": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "format": "biome format --write",
+    "lint": "biome lint --write",
+    "check": "biome check src"
   },
-  "keywords": ["fal", "ai", "cli", "generative", "image", "video", "audio", "falgen"],
+  "keywords": [
+    "fal",
+    "ai",
+    "cli",
+    "generative",
+    "image",
+    "video",
+    "audio",
+    "falgen"
+  ],
   "dependencies": {
-    "@fal-ai/client": "^1.6.2"
+    "@fal-ai/client": "^1.9.4",
+    "citty": "^0.2.1"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.7.0"
+    "@biomejs/biome": "^2.4.7",
+    "bun-types": "^1.3.10",
+    "typescript": "^5.9.3"
   }
 }
