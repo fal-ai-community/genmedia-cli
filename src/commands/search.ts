@@ -14,18 +14,29 @@ export default defineCommand({
       description:
         "Filter by category (text-to-image, image-to-video, text-to-video, text-to-speech, etc.)",
     },
+    status: {
+      type: "string",
+      default: "active",
+      description: "Filter by status: active (default), deprecated, or all",
+    },
     limit: {
       type: "string",
       default: "20",
       description: "Max results (default: 20)",
+    },
+    cursor: {
+      type: "string",
+      description:
+        "Pagination cursor from a previous response to fetch the next page",
     },
   },
   async run({ args }) {
     const url = new URL(`${PLATFORM_BASE}/models`);
     if (args.query) url.searchParams.set("q", args.query);
     if (args.category) url.searchParams.set("category", args.category);
-    url.searchParams.set("status", "active");
+    if (args.status !== "all") url.searchParams.set("status", args.status);
     url.searchParams.set("limit", String(parseInt(args.limit, 10)));
+    if (args.cursor) url.searchParams.set("cursor", args.cursor);
 
     const res = await fetch(url.toString(), { headers: platformHeaders() });
     if (!res.ok) error(`Search failed (${res.status})`, await res.text());
@@ -33,6 +44,7 @@ export default defineCommand({
     const data = (await res.json()) as {
       models: Array<Record<string, unknown>>;
       has_more: boolean;
+      cursor?: string;
     };
     const models = data.models.map((m: Record<string, unknown>) => {
       const meta = (m.metadata as Record<string, unknown>) || {};
@@ -44,6 +56,11 @@ export default defineCommand({
       };
     });
 
-    output({ models, count: models.length, has_more: data.has_more });
+    output({
+      models,
+      count: models.length,
+      has_more: data.has_more,
+      ...(data.cursor ? { next_cursor: data.cursor } : {}),
+    });
   },
 });

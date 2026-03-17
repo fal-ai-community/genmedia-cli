@@ -19,12 +19,15 @@ if (
     commands: {
       search: {
         description: "Search fal.ai model catalog (600+ models)",
-        usage: "falgen search <query> [--category <cat>] [--limit <n>]",
+        usage:
+          "falgen search <query> [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>]",
         args: "<query>",
         options: {
           "--category":
             "Filter by category (text-to-image, image-to-video, text-to-video, text-to-speech, etc.)",
+          "--status": "Filter by status: active (default), deprecated, or all",
           "--limit": "Max results (default: 20)",
+          "--cursor": "Pagination cursor from a previous response",
         },
       },
       schema: {
