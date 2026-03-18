@@ -1,4 +1,10 @@
 import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from "node:crypto";
+import {
   chmodSync,
   existsSync,
   mkdirSync,
@@ -7,14 +13,8 @@ import {
 } from "node:fs";
 import { hostname, userInfo } from "node:os";
 import { join } from "node:path";
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto";
 
-export type OutputFormat = "json" | "standard";
+export type OutputFormat = "auto" | "json" | "standard";
 
 // In-memory representation — apiKey is always decrypted here
 export interface FalgenConfig {

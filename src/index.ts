@@ -41,11 +41,12 @@ if (
       },
       run: {
         description: "Run any model (waits for result)",
-        usage: "falgen run <endpoint_id> [--key value ...]",
+        usage: "falgen run <endpoint_id> [--key value ...] [--logs]",
         args: "<endpoint_id>",
         options: {
           "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
           "--async": "Submit to queue instead of waiting (returns request_id)",
+          "--logs": "Stream logs in pretty terminal mode",
         },
       },
       upload: {
@@ -55,11 +56,13 @@ if (
       },
       status: {
         description: "Check job status or get result",
-        usage: "falgen status <endpoint_id> <request_id> [--result] [--cancel]",
+        usage:
+          "falgen status <endpoint_id> <request_id> [--result] [--cancel] [--logs]",
         args: "<endpoint_id> <request_id>",
         options: {
           "--result": "Fetch the completed result",
           "--cancel": "Cancel the job",
+          "--logs": "Show logs verbosely in pretty terminal mode",
         },
       },
       pricing: {

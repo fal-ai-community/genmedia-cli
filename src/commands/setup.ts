@@ -1,22 +1,25 @@
-import { createInterface } from "node:readline/promises";
 import { defineCommand } from "citty";
 import {
   CONFIG_DIR,
   type FalgenConfig,
-  type OutputFormat,
   loadConfig,
+  type OutputFormat,
   saveConfig,
 } from "../lib/config";
+import { error } from "../lib/output";
+import {
+  colors,
+  hasInteractiveTerminal,
+  maskSecret,
+  PromptCancelledError,
+  promptConfirm,
+  promptSelect,
+  promptText,
+  symbols,
+} from "../lib/ui";
 
-type Rl = ReturnType<typeof createInterface>;
-
-async function ask(rl: Rl, question: string): Promise<string> {
-  return rl.question(question);
-}
-
-async function confirm(rl: Rl, question: string): Promise<boolean> {
-  const answer = await rl.question(`${question} [y/N] `);
-  return answer.trim().toLowerCase() === "y";
+function printLine(line = ""): void {
+  process.stdout.write(`${line}\n`);
 }
 
 export default defineCommand({
@@ -25,122 +28,137 @@ export default defineCommand({
     description: "Configure your fal.ai API key and preferences",
   },
   async run() {
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
+    if (!hasInteractiveTerminal()) {
+      error("`falgen setup` requires an interactive terminal.", {
+        hint: "Set FAL_KEY in your shell profile, or run `falgen setup` from a terminal session.",
+      });
+    }
+
     const current = loadConfig();
+    const currentFormat: OutputFormat = current.outputFormat ?? "auto";
 
-    console.log("\nfalgen setup\n");
+    printLine();
+    printLine(colors.bold("falgen setup"));
+    printLine(colors.dim("Configure your local fal.ai defaults."));
+    printLine();
 
-    // --- API Key ---
     if (current.apiKey) {
-      console.log(`Current API key: ${current.apiKey.slice(0, 8)}...`);
+      printLine(
+        `${symbols.info} Current API key: ${maskSecret(current.apiKey)}`,
+      );
     } else {
-      console.log("No API key configured.");
-      console.log("Get one at: https://fal.ai/dashboard/keys\n");
+      printLine(`${symbols.warning} No API key configured yet.`);
+      printLine("    Get one at: https://fal.ai/dashboard/keys");
     }
 
-    const keyInput = await ask(
-      rl,
-      current.apiKey
-        ? "Enter a new API key (or press Enter to keep the current one): "
-        : "Enter your fal.ai API key (or press Enter to skip): ",
-    );
+    try {
+      const keyInput = (
+        await promptText({
+          message: current.apiKey
+            ? "Enter a new API key (leave blank to keep the current one)"
+            : "Enter your fal.ai API key (leave blank to skip)",
+          password: true,
+        })
+      ).trim();
 
-    let apiKey = current.apiKey;
-    const newKey = keyInput.trim();
-
-    if (newKey) {
-      console.log(
-        "\nThe key will be encrypted and saved to this machine. This protects against",
-      );
-      console.log(
-        "accidental exposure (backups, dotfile sync) but not against someone with",
-      );
-      console.log(
-        "access to your user account. On shared computers, use FAL_KEY env var instead.\n",
-      );
-
-      const save = await confirm(
-        rl,
-        "Save the API key to this machine's config?",
-      );
-      if (save) {
-        apiKey = newKey;
-      } else {
-        console.log(
-          "\nKey not saved. Set FAL_KEY in your shell profile to use it:\n",
+      let apiKey = current.apiKey;
+      if (keyInput) {
+        printLine();
+        printLine(colors.bold("Local key storage"));
+        printLine(
+          "  Your key is encrypted on this machine. For shared computers, prefer",
         );
-        console.log(`  export FAL_KEY="${newKey.slice(0, 8)}..."\n`);
-        apiKey = current.apiKey; // keep previous, don't overwrite
+        printLine("  setting FAL_KEY in the environment instead.");
+
+        const saveKey = await promptConfirm({
+          message: "Save the API key to this machine's config?",
+          initial: true,
+        });
+
+        if (saveKey) {
+          apiKey = keyInput;
+        } else {
+          printLine();
+          printLine(`${symbols.info} Key not saved locally.`);
+          printLine(`    export FAL_KEY="${maskSecret(keyInput)}"`);
+          apiKey = current.apiKey;
+        }
+      } else if (!current.apiKey) {
+        printLine();
+        printLine(`${symbols.warning} No API key provided.`);
+        printLine("    Other commands will require FAL_KEY until you set one.");
       }
-    } else if (!current.apiKey) {
-      console.log(
-        "\nNo API key provided. Other commands won't work until you set one.",
+
+      printLine();
+      printLine(colors.bold("Project environment loading"));
+      printLine(
+        "  Auto-load FAL_KEY and related variables from a local .env file.",
       );
-      console.log("Get your key at: https://fal.ai/dashboard/keys");
-      console.log("Run `falgen setup` again once you have it.\n");
+      printLine("  Shell environment variables still take precedence.");
+
+      const autoLoadEnv = await promptConfirm({
+        message: "Auto-load .env from the current project directory?",
+        initial: current.autoLoadEnv ?? false,
+      });
+
+      printLine();
+      printLine(colors.bold("Default output mode"));
+      printLine("  auto     Pretty in a TTY, JSON when piped.");
+      printLine("  json     Always structured output.");
+      printLine("  standard Always human-readable text.");
+
+      const formatOrder: OutputFormat[] = ["auto", "json", "standard"];
+      const outputFormat = await promptSelect<OutputFormat>({
+        message: "Choose the default output mode",
+        initial: Math.max(formatOrder.indexOf(currentFormat), 0),
+        choices: [
+          {
+            title: "auto",
+            description: "Pretty in a TTY, JSON when piped",
+            value: "auto",
+          },
+          {
+            title: "json",
+            description: "Always emit machine-readable JSON",
+            value: "json",
+          },
+          {
+            title: "standard",
+            description: "Always emit human-readable text",
+            value: "standard",
+          },
+        ],
+      });
+
+      const config: FalgenConfig = {
+        ...(apiKey ? { apiKey } : {}),
+        outputFormat,
+        autoLoadEnv,
+      };
+
+      saveConfig(config);
+
+      printLine();
+      printLine(
+        `${colors.green(symbols.success)} Configuration saved to ${CONFIG_DIR}/config.json`,
+      );
+      if (apiKey) {
+        printLine(`  API key: ${maskSecret(apiKey)}`);
+      } else {
+        printLine("  API key: not saved");
+      }
+      printLine(`  Output mode: ${outputFormat}`);
+      printLine(`  Auto-load .env: ${autoLoadEnv ? "yes" : "no"}`);
+      printLine();
+    } catch (setupError) {
+      if (setupError instanceof PromptCancelledError) {
+        printLine();
+        printLine(`${symbols.warning} Setup cancelled. No changes saved.`);
+        printLine();
+        return;
+      }
+
+      throw setupError;
     }
-
-    // --- Auto-load .env ---
-    const currentAutoLoad = current.autoLoadEnv ?? false;
-    console.log("\nAuto-load .env file:");
-    console.log(
-      "  Reads FAL_KEY (and other vars) from a .env file in the current directory.",
-    );
-    console.log(
-      "  Useful for project-specific keys. Shell env vars always take precedence.\n",
-    );
-
-    const autoLoadInput = await ask(
-      rl,
-      `Auto-load .env from project directory? [y/n] (current: ${currentAutoLoad ? "yes" : "no"}): `,
-    );
-
-    let autoLoadEnv = currentAutoLoad;
-    const autoLoadTrimmed = autoLoadInput.trim().toLowerCase();
-    if (autoLoadTrimmed === "y" || autoLoadTrimmed === "yes") {
-      autoLoadEnv = true;
-    } else if (autoLoadTrimmed === "n" || autoLoadTrimmed === "no") {
-      autoLoadEnv = false;
-    }
-
-    // --- Output format ---
-    const currentFormat = current.outputFormat ?? "json";
-    console.log("\nOutput format:");
-    console.log(
-      "  json     — structured JSON (default, best for agents and scripts)",
-    );
-    console.log("  standard — human-readable text");
-
-    const formatInput = await ask(
-      rl,
-      `Choose output format [json/standard] (current: ${currentFormat}): `,
-    );
-
-    let outputFormat: OutputFormat = currentFormat;
-    const trimmed = formatInput.trim().toLowerCase();
-    if (trimmed === "json" || trimmed === "standard") {
-      outputFormat = trimmed as OutputFormat;
-    }
-
-    rl.close();
-
-    const config: FalgenConfig = {
-      ...(apiKey ? { apiKey } : {}),
-      outputFormat,
-      autoLoadEnv,
-    };
-
-    saveConfig(config);
-
-    console.log(`\nConfiguration saved to ${CONFIG_DIR}/config.json\n`);
-    if (apiKey) {
-      console.log(`  API key:       ${apiKey.slice(0, 8)}...`);
-    }
-    console.log(`  Output format: ${outputFormat}`);
-    console.log(`  Auto-load .env: ${autoLoadEnv ? "yes" : "no"}`);
-    console.log();
   },
 });

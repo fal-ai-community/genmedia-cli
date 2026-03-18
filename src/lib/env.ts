@@ -7,5 +7,5 @@ import { loadConfig } from "./config";
 // Only runs when autoLoadEnv is enabled in the user's config.
 export function loadDotEnv(): void {
   if (!loadConfig().autoLoadEnv) return;
-  config({ path: join(process.cwd(), ".env"), override: false });
+  config({ path: join(process.cwd(), ".env"), override: false, quiet: true });
 }
