@@ -1,18 +1,24 @@
 import { defineCommand } from "citty";
 import { PLATFORM_BASE, platformHeaders } from "../lib/api";
-import { error, output } from "../lib/output";
+import { error, output, outputRawJson } from "../lib/output";
 import { simplifyProps } from "../lib/simplify-props";
 
 export default defineCommand({
   meta: {
     name: "schema",
-    description: "Get full input/output schema for any model",
+    description: "Get model schema in compact or OpenAPI format",
   },
   args: {
     endpointId: {
       type: "positional",
       required: true,
       description: "Model endpoint ID",
+    },
+    format: {
+      type: "enum",
+      default: "compact",
+      options: ["compact", "openapi"],
+      description: "Schema format: compact (default) or openapi",
     },
   },
   async run({ args }) {
@@ -30,6 +36,15 @@ export default defineCommand({
 
     const model = data.models[0];
     const openapi = model.openapi as Record<string, unknown> | undefined;
+    if (args.format === "openapi") {
+      if (!openapi) {
+        error(`OpenAPI schema not available for: ${args.endpointId}`);
+      }
+
+      outputRawJson(openapi);
+      return;
+    }
+
     const components = openapi?.components as
       | Record<string, unknown>
       | undefined;

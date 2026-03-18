@@ -227,6 +227,10 @@ export function output(data: unknown, options: OutputOptions = {}): void {
   printPretty(data, options, writeStdout);
 }
 
+export function outputRawJson(data: unknown): void {
+  writeStdout(JSON.stringify(data, null, 2));
+}
+
 export function error(
   message: string,
   details?: unknown,

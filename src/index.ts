@@ -35,9 +35,12 @@ if (
         },
       },
       schema: {
-        description: "Get full input/output schema for any model",
-        usage: "falgen schema <endpoint_id>",
+        description: "Get model schema in compact or OpenAPI format",
+        usage: "falgen schema <endpoint_id> [--format <compact|openapi>]",
         args: "<endpoint_id>",
+        options: {
+          "--format": "Schema format: compact (default) or openapi",
+        },
       },
       run: {
         description: "Run any model (waits for result)",

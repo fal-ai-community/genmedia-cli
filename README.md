@@ -34,7 +34,8 @@ export FAL_KEY=your_fal_api_key
 
 ```bash
 falgen search "text to video"                    # Search 600+ models
-falgen schema fal-ai/flux/dev                    # Get input/output params
+falgen schema fal-ai/flux/dev                    # Get compact input/output params
+falgen schema fal-ai/flux/dev --format openapi   # Print raw OpenAPI JSON
 falgen run fal-ai/flux/dev --prompt "a cat"      # Run any model
 falgen run fal-ai/flux/dev --prompt "a cat" --logs
 falgen run fal-ai/veo3.1 --prompt "..." --async  # Submit long job
