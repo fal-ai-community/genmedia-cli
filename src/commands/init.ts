@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { defineCommand } from "citty";
 import { isJsonOutput, output } from "../lib/output";
-import { FALGEN_REF_SKILL, FALGEN_WORKFLOW_SKILL } from "../skills/index";
 import { colors, symbols } from "../lib/ui";
+import { FALGEN_REF_SKILL, FALGEN_WORKFLOW_SKILL } from "../skills/index";
 
 const COMMANDS_DIR = ".claude/commands";
 

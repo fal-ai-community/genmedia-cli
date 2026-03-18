@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag (e.g. v0.1.0)"
+        required: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: bun-linux-x64
+            artifact: falgen
+            platform: linux-x64
+          - target: bun-linux-arm64
+            artifact: falgen
+            platform: linux-arm64
+          - target: bun-darwin-x64
+            artifact: falgen
+            platform: darwin-x64
+          - target: bun-darwin-arm64
+            artifact: falgen
+            platform: darwin-arm64
+          - target: bun-windows-x64
+            artifact: falgen.exe
+            platform: windows-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate version
+        run: bun run scripts/gen-version.ts
+
+      - name: Build binary
+        run: |
+          bun build --compile --minify --bytecode \
+            --target=${{ matrix.target }} \
+            src/index.ts \
+            --outfile dist/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/linux-x64/falgen
+            dist/linux-arm64/falgen
+            dist/darwin-x64/falgen
+            dist/darwin-arm64/falgen
+            dist/windows-x64/falgen.exe
