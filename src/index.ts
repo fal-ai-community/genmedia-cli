@@ -21,17 +21,20 @@ if (
         "Your fal.ai API key. Can also be set via `falgen setup`. Get one at https://fal.ai/dashboard/keys",
     },
     commands: {
-      search: {
-        description: "Search fal.ai model catalog (600+ models)",
+      models: {
+        description: "Search, list, and inspect fal.ai models",
         usage:
-          "falgen search <query> [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>]",
-        args: "<query>",
+          "falgen models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>]",
+        args: "[query]",
         options: {
           "--category":
             "Filter by category (text-to-image, image-to-video, text-to-video, text-to-speech, etc.)",
           "--status": "Filter by status: active (default), deprecated, or all",
           "--limit": "Max results (default: 20)",
           "--cursor": "Pagination cursor from a previous response",
+          "--endpoint_id":
+            "Specific endpoint ID(s). Repeat the flag or pass comma-separated values",
+          "--expand": "Expand fields: openapi-3.0, enterprise_status",
         },
       },
       schema: {
@@ -73,23 +76,6 @@ if (
         usage: "falgen pricing <endpoint_id>",
         args: "<endpoint_id>",
       },
-      models: {
-        description: "Search, list, and inspect fal.ai models",
-        usage:
-          "falgen models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint-id <id>] [--expand <field>]",
-        args: "[query]",
-        options: {
-          "--category":
-            "Filter by category (text-to-image, image-to-video, etc.)",
-          "--status": "Filter by status: active (default), deprecated, or all",
-          "--limit": "Max results (default: 20)",
-          "--cursor": "Pagination cursor from a previous response",
-          "--endpoint-id":
-            "Specific endpoint ID(s). Repeat the flag or pass comma-separated values",
-          "--expand":
-            "Expand fields. Repeat the flag or pass comma-separated values: openapi-3.0, enterprise_status",
-        },
-      },
       docs: {
         description: "Search fal.ai documentation, guides, and API references",
         usage: "falgen docs <query>",
@@ -123,17 +109,16 @@ const main = defineCommand({
     description: "Agent-first CLI for fal.ai",
   },
   subCommands: {
-    search: () => import("./commands/search").then((m) => m.default),
-    schema: () => import("./commands/schema").then((m) => m.default),
-    run: () => import("./commands/run").then((m) => m.default),
-    upload: () => import("./commands/upload").then((m) => m.default),
-    status: () => import("./commands/status").then((m) => m.default),
-    pricing: () => import("./commands/pricing").then((m) => m.default),
-    models: () => import("./commands/models").then((m) => m.default),
-    docs: () => import("./commands/docs").then((m) => m.default),
-    version: () => import("./commands/version").then((m) => m.default),
     setup: () => import("./commands/setup").then((m) => m.default),
     init: () => import("./commands/init").then((m) => m.default),
+    models: () => import("./commands/models").then((m) => m.default),
+    schema: () => import("./commands/schema").then((m) => m.default),
+    run: () => import("./commands/run").then((m) => m.default),
+    status: () => import("./commands/status").then((m) => m.default),
+    upload: () => import("./commands/upload").then((m) => m.default),
+    pricing: () => import("./commands/pricing").then((m) => m.default),
+    docs: () => import("./commands/docs").then((m) => m.default),
+    version: () => import("./commands/version").then((m) => m.default),
   },
 });
 

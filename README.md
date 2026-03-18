@@ -38,14 +38,16 @@ export FAL_KEY=your_fal_api_key
 
 ## Commands
 
-### `search` — Find models
+### `models` — Search and inspect models
 
 ```bash
-falgen search "text to video"
-falgen search "image upscaler" --category image-to-image
-falgen search --category text-to-speech --limit 5
-falgen search "flux" --status all          # include deprecated
-falgen search "flux" --cursor <token>      # next page
+falgen models "text to video"
+falgen models "flux" --category text-to-image
+falgen models --category text-to-speech --limit 5
+falgen models --status all                                      # include deprecated
+falgen models --endpoint_id fal-ai/flux/dev,fal-ai/flux/schnell # fetch specific models
+falgen models --endpoint_id fal-ai/flux/dev --expand openapi-3.0
+falgen models "flux" --cursor <token>                           # next page
 ```
 
 | Option | Description |
@@ -54,26 +56,8 @@ falgen search "flux" --cursor <token>      # next page
 | `--status` | `active` (default), `deprecated`, or `all` |
 | `--limit` | Max results (default: 20) |
 | `--cursor` | Pagination cursor from a previous response |
-
-### `models` — List and inspect models
-
-```bash
-falgen models "flux"
-falgen models --category text-to-video
-falgen models --endpoint_id fal-ai/flux/dev,fal-ai/flux/schnell
-falgen models --endpoint_id fal-ai/flux/dev --expand openapi-3.0
-```
-
-More powerful than `search` — supports fetching specific endpoints by ID and expanding additional fields like the full OpenAPI schema.
-
-| Option | Description |
-|---|---|
-| `--category` | Filter by category |
-| `--status` | `active` (default), `deprecated`, or `all` |
-| `--limit` | Max results (default: 20) |
-| `--cursor` | Pagination cursor |
-| `--endpoint_id` | Specific endpoint ID(s), comma-separated or repeated |
-| `--expand` | Expand fields: `openapi-3.0`, `enterprise_status` |
+| `--endpoint_id` | Fetch specific model(s) by ID — comma-separated or repeated |
+| `--expand` | Expand additional fields: `openapi-3.0`, `enterprise_status` |
 
 ### `schema` — Inspect model inputs/outputs
 

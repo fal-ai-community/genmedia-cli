@@ -28,23 +28,15 @@ falgen reads credentials from (in priority order):
 
 ## Commands
 
-### search — find models
-
-\`\`\`
-falgen search <query> [--category <cat>] [--status active|deprecated|all] [--limit <n>] [--cursor <token>] [--json]
-\`\`\`
-
-Returns a list of models with endpoint_id, name, category, and description.
-Use \`--cursor\` from a previous response to page through results.
-
-### models — list and inspect models
+### models — search and inspect models
 
 \`\`\`
 falgen models [query] [--category <cat>] [--status active|deprecated|all] [--limit <n>] [--cursor <token>] [--endpoint_id <id,...>] [--expand openapi-3.0] [--json]
 \`\`\`
 
-Like search but more powerful. Use \`--endpoint_id\` to fetch specific models
-by ID. Use \`--expand openapi-3.0\` to get the full OpenAPI schema for each model.
+Free-text search across 600+ models. Use \`--endpoint_id\` to fetch specific
+models by ID. Use \`--expand openapi-3.0\` to get the full OpenAPI schema.
+Use \`--cursor\` from a previous response to page through results.
 
 ### schema — inspect model inputs/outputs
 
@@ -124,7 +116,7 @@ falgen run fal-ai/some-model --image_url <cdn_url> --json
 
 ### Discovering models for a task
 \`\`\`
-falgen search "text to video" --json
+falgen models "text to video" --json
 falgen schema <endpoint_id> --json
 \`\`\`
 `;
@@ -144,7 +136,7 @@ Task or endpoint: $ARGUMENTS
 
 1. **Discover** — If no endpoint_id is given, search for a suitable model:
    \`\`\`
-   falgen search "<task>" --json
+   falgen models "<task>" --json
    \`\`\`
 
 2. **Inspect** — Get the model's input parameters:
