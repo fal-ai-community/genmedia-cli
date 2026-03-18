@@ -150,6 +150,22 @@ falgen version
 
 Shows the current version and checks for updates.
 
+### `init` — Install Claude Code skills
+
+```bash
+falgen init
+falgen init --force   # overwrite existing files
+```
+
+Installs two skill files into `.claude/commands/` in the current directory:
+
+| File | Purpose |
+|---|---|
+| `falgen-ref.md` | Background reference — Claude loads this automatically when fal.ai work is detected |
+| `falgen.md` | `/falgen` workflow skill — guides through model discovery, schema inspection, and execution |
+
+After running `init`, any Claude Code session in that project will have full falgen knowledge without needing to call `--help`. Commit the files so teammates and other agents get the same context.
+
 ## Agent-first design
 
 All commands output structured JSON when piped or called with `--json`:

@@ -103,6 +103,14 @@ if (
         description: "Configure your fal.ai API key and preferences",
         usage: "falgen setup",
       },
+      init: {
+        description:
+          "Install Claude Code skills for falgen into the current project (.claude/commands/)",
+        usage: "falgen init [--force]",
+        options: {
+          "--force": "Overwrite existing skill files",
+        },
+      },
     },
   });
   process.exit(0);
@@ -125,6 +133,7 @@ const main = defineCommand({
     docs: () => import("./commands/docs").then((m) => m.default),
     version: () => import("./commands/version").then((m) => m.default),
     setup: () => import("./commands/setup").then((m) => m.default),
+    init: () => import("./commands/init").then((m) => m.default),
   },
 });
 
