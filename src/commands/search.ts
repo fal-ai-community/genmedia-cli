@@ -44,7 +44,7 @@ export default defineCommand({
     const data = (await res.json()) as {
       models: Array<Record<string, unknown>>;
       has_more: boolean;
-      cursor?: string;
+      next_cursor?: string | null;
     };
     const models = data.models.map((m: Record<string, unknown>) => {
       const meta = (m.metadata as Record<string, unknown>) || {};
@@ -60,7 +60,7 @@ export default defineCommand({
       models,
       count: models.length,
       has_more: data.has_more,
-      ...(data.cursor ? { next_cursor: data.cursor } : {}),
+      ...(data.next_cursor ? { next_cursor: data.next_cursor } : {}),
     });
   },
 });

@@ -42,7 +42,7 @@ falgen upload ./photo.jpg                        # Upload to CDN
 falgen status fal-ai/flux/dev <req_id> --result  # Get job result
 falgen status fal-ai/flux/dev <req_id> --logs    # Show recent logs
 falgen pricing fal-ai/flux/dev                   # Check pricing
-falgen models --category text-to-image           # Browse by category
+falgen models "text to video" --category text-to-video # Search/list with filters
 falgen docs "how to use LoRA"                    # Search documentation
 ```
 

@@ -71,11 +71,20 @@ if (
         args: "<endpoint_id>",
       },
       models: {
-        description: "List models by category",
-        usage: "falgen models [--category <cat>]",
+        description: "Search, list, and inspect fal.ai models",
+        usage:
+          "falgen models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint-id <id>] [--expand <field>]",
+        args: "[query]",
         options: {
           "--category":
-            "Category to list (text-to-image, image-to-video, etc.)",
+            "Filter by category (text-to-image, image-to-video, etc.)",
+          "--status": "Filter by status: active (default), deprecated, or all",
+          "--limit": "Max results (default: 20)",
+          "--cursor": "Pagination cursor from a previous response",
+          "--endpoint-id":
+            "Specific endpoint ID(s). Repeat the flag or pass comma-separated values",
+          "--expand":
+            "Expand fields. Repeat the flag or pass comma-separated values: openapi-3.0, enterprise_status",
         },
       },
       docs: {
