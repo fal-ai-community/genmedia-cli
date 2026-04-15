@@ -11,20 +11,20 @@ if (
   !process.argv.slice(2).find((a) => !a.startsWith("-"))
 ) {
   output({
-    name: "falgen",
+    name: "genmedia",
     version: VERSION,
     description:
       "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
-    install: "curl https://falgen.sh/install -fsS | bash",
+    install: "curl https://genmedia.sh/install -fsS | bash",
     env: {
       FAL_KEY:
-        "Your fal.ai API key. Can also be set via `falgen setup`. Get one at https://fal.ai/dashboard/keys",
+        "Your fal.ai API key. Can also be set via `genmedia setup`. Get one at https://fal.ai/dashboard/keys",
     },
     commands: {
       models: {
         description: "Search, list, and inspect fal.ai models",
         usage:
-          "falgen models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>]",
+          "genmedia models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>]",
         args: "[query]",
         options: {
           "--category":
@@ -39,7 +39,7 @@ if (
       },
       schema: {
         description: "Get model schema in compact or OpenAPI format",
-        usage: "falgen schema <endpoint_id> [--format <compact|openapi>]",
+        usage: "genmedia schema <endpoint_id> [--format <compact|openapi>]",
         args: "<endpoint_id>",
         options: {
           "--format": "Schema format: compact (default) or openapi",
@@ -47,7 +47,7 @@ if (
       },
       run: {
         description: "Run any model (waits for result)",
-        usage: "falgen run <endpoint_id> [--key value ...] [--logs]",
+        usage: "genmedia run <endpoint_id> [--key value ...] [--logs]",
         args: "<endpoint_id>",
         options: {
           "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
@@ -57,13 +57,13 @@ if (
       },
       upload: {
         description: "Upload a local file or URL to fal.ai CDN",
-        usage: "falgen upload <file_path_or_url>",
+        usage: "genmedia upload <file_path_or_url>",
         args: "<file_path_or_url>",
       },
       status: {
         description: "Check job status or get result",
         usage:
-          "falgen status <endpoint_id> <request_id> [--result] [--cancel] [--logs]",
+          "genmedia status <endpoint_id> <request_id> [--result] [--cancel] [--logs]",
         args: "<endpoint_id> <request_id>",
         options: {
           "--result": "Fetch the completed result",
@@ -73,26 +73,26 @@ if (
       },
       pricing: {
         description: "Get pricing information for a model",
-        usage: "falgen pricing <endpoint_id>",
+        usage: "genmedia pricing <endpoint_id>",
         args: "<endpoint_id>",
       },
       docs: {
         description: "Search fal.ai documentation, guides, and API references",
-        usage: "falgen docs <query>",
+        usage: "genmedia docs <query>",
         args: "<query>",
       },
       version: {
         description: "Show version and check for updates",
-        usage: "falgen version",
+        usage: "genmedia version",
       },
       setup: {
         description: "Configure your fal.ai API key and preferences",
-        usage: "falgen setup",
+        usage: "genmedia setup",
       },
       init: {
         description:
-          "Install Claude Code skills for falgen into the current project (.claude/commands/)",
-        usage: "falgen init [--force]",
+          "Install Claude Code skills for genmedia into the current project (.claude/commands/)",
+        usage: "genmedia init [--force]",
         options: {
           "--force": "Overwrite existing skill files",
         },
@@ -104,7 +104,7 @@ if (
 
 const main = defineCommand({
   meta: {
-    name: "falgen",
+    name: "genmedia",
     version: VERSION,
     description: "Agent-first CLI for fal.ai",
   },

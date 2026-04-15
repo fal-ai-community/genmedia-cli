@@ -63,7 +63,7 @@ export default defineCommand({
           status: "submitted",
           request_id: result.request_id,
           endpoint_id: endpointId,
-          hint: `Check status: falgen status ${endpointId} ${result.request_id}`,
+          hint: `Check status: genmedia status ${endpointId} ${result.request_id}`,
         },
         { view: "run" },
       );

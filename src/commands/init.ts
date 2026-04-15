@@ -3,20 +3,20 @@ import { join } from "node:path";
 import { defineCommand } from "citty";
 import { isJsonOutput, output } from "../lib/output";
 import { colors, symbols } from "../lib/ui";
-import { FALGEN_REF_SKILL, FALGEN_WORKFLOW_SKILL } from "../skills/index";
+import { GENMEDIA_REF_SKILL, GENMEDIA_WORKFLOW_SKILL } from "../skills/index";
 
 const COMMANDS_DIR = ".claude/commands";
 
 const SKILLS: Array<{ filename: string; content: string; label: string }> = [
   {
-    filename: "falgen-ref.md",
-    content: FALGEN_REF_SKILL,
+    filename: "genmedia-ref.md",
+    content: GENMEDIA_REF_SKILL,
     label: "Background reference (auto-loaded by Claude)",
   },
   {
-    filename: "falgen.md",
-    content: FALGEN_WORKFLOW_SKILL,
-    label: "Workflow skill (/falgen)",
+    filename: "genmedia.md",
+    content: GENMEDIA_WORKFLOW_SKILL,
+    label: "Workflow skill (/genmedia)",
   },
 ];
 
@@ -27,7 +27,7 @@ function printLine(line = ""): void {
 export default defineCommand({
   meta: {
     name: "init",
-    description: "Install Claude Code skills for falgen into this project",
+    description: "Install Claude Code skills for genmedia into this project",
   },
   args: {
     force: {

@@ -18,19 +18,19 @@ jobs:
       matrix:
         include:
           - target: bun-linux-x64
-            artifact: falgen
+            artifact: genmedia
             platform: linux-x64
           - target: bun-linux-arm64
-            artifact: falgen
+            artifact: genmedia
             platform: linux-arm64
           - target: bun-darwin-x64
-            artifact: falgen
+            artifact: genmedia
             platform: darwin-x64
           - target: bun-darwin-arm64
-            artifact: falgen
+            artifact: genmedia
             platform: darwin-arm64
           - target: bun-windows-x64
-            artifact: falgen.exe
+            artifact: genmedia.exe
             platform: windows-x64
 
     steps:
@@ -86,8 +86,8 @@ jobs:
           name: ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           files: |
-            dist/linux-x64/falgen
-            dist/linux-arm64/falgen
-            dist/darwin-x64/falgen
-            dist/darwin-arm64/falgen
-            dist/windows-x64/falgen.exe
+            dist/linux-x64/genmedia
+            dist/linux-arm64/genmedia
+            dist/darwin-x64/genmedia
+            dist/darwin-arm64/genmedia
+            dist/windows-x64/genmedia.exe

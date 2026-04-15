@@ -1,4 +1,4 @@
-# falgen
+# genmedia
 
 Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models.
 
@@ -7,19 +7,19 @@ Works great for humans in a terminal and equally well for AI agents via shell co
 ## Install
 
 ```bash
-npx falgen --help
+npx genmedia --help
 ```
 
 Or install globally:
 
 ```bash
-curl https://falgen.sh/install -fsS | bash
+curl https://genmedia.sh/install -fsS | bash
 ```
 
 ## Setup
 
 ```bash
-falgen setup
+genmedia setup
 ```
 
 Interactive wizard that configures:
@@ -41,13 +41,13 @@ export FAL_KEY=your_fal_api_key
 ### `models` — Search and inspect models
 
 ```bash
-falgen models "text to video"
-falgen models "flux" --category text-to-image
-falgen models --category text-to-speech --limit 5
-falgen models --status all                                      # include deprecated
-falgen models --endpoint_id fal-ai/flux/dev,fal-ai/flux/schnell # fetch specific models
-falgen models --endpoint_id fal-ai/flux/dev --expand openapi-3.0
-falgen models "flux" --cursor <token>                           # next page
+genmedia models "text to video"
+genmedia models "flux" --category text-to-image
+genmedia models --category text-to-speech --limit 5
+genmedia models --status all                                      # include deprecated
+genmedia models --endpoint_id fal-ai/flux/dev,fal-ai/flux/schnell # fetch specific models
+genmedia models --endpoint_id fal-ai/flux/dev --expand openapi-3.0
+genmedia models "flux" --cursor <token>                           # next page
 ```
 
 | Option | Description |
@@ -62,8 +62,8 @@ falgen models "flux" --cursor <token>                           # next page
 ### `schema` — Inspect model inputs/outputs
 
 ```bash
-falgen schema fal-ai/flux/dev
-falgen schema fal-ai/flux/dev --format openapi
+genmedia schema fal-ai/flux/dev
+genmedia schema fal-ai/flux/dev --format openapi
 ```
 
 | Option | Description |
@@ -73,13 +73,13 @@ falgen schema fal-ai/flux/dev --format openapi
 ### `run` — Run a model
 
 ```bash
-falgen run fal-ai/flux/dev --prompt "a cat on the moon"
-falgen run fal-ai/flux/dev --prompt "a cat" --num_images 2
-falgen run fal-ai/flux/dev --prompt "a cat" --logs
-falgen run fal-ai/veo3.1 --prompt "a dog running" --async
+genmedia run fal-ai/flux/dev --prompt "a cat on the moon"
+genmedia run fal-ai/flux/dev --prompt "a cat" --num_images 2
+genmedia run fal-ai/flux/dev --prompt "a cat" --logs
+genmedia run fal-ai/veo3.1 --prompt "a dog running" --async
 ```
 
-Any model input parameter can be passed as a `--flag value` pair. `falgen schema <endpoint_id>` shows what parameters a model accepts.
+Any model input parameter can be passed as a `--flag value` pair. `genmedia schema <endpoint_id>` shows what parameters a model accepts.
 
 | Option | Description |
 |---|---|
@@ -90,10 +90,10 @@ Any model input parameter can be passed as a `--flag value` pair. `falgen schema
 ### `status` — Check an async job
 
 ```bash
-falgen status fal-ai/veo3.1 <request_id>
-falgen status fal-ai/veo3.1 <request_id> --result
-falgen status fal-ai/veo3.1 <request_id> --logs
-falgen status fal-ai/veo3.1 <request_id> --cancel
+genmedia status fal-ai/veo3.1 <request_id>
+genmedia status fal-ai/veo3.1 <request_id> --result
+genmedia status fal-ai/veo3.1 <request_id> --logs
+genmedia status fal-ai/veo3.1 <request_id> --cancel
 ```
 
 | Option | Description |
@@ -105,8 +105,8 @@ falgen status fal-ai/veo3.1 <request_id> --cancel
 ### `upload` — Upload files to fal.ai CDN
 
 ```bash
-falgen upload ./photo.jpg
-falgen upload https://example.com/image.png
+genmedia upload ./photo.jpg
+genmedia upload https://example.com/image.png
 ```
 
 Accepts a local file path or a remote URL. Returns a CDN URL you can use as model input.
@@ -114,14 +114,14 @@ Accepts a local file path or a remote URL. Returns a CDN URL you can use as mode
 ### `pricing` — Check model pricing
 
 ```bash
-falgen pricing fal-ai/flux/dev
+genmedia pricing fal-ai/flux/dev
 ```
 
 ### `docs` — Search documentation
 
 ```bash
-falgen docs "how to use LoRA"
-falgen docs "webhook callbacks"
+genmedia docs "how to use LoRA"
+genmedia docs "webhook callbacks"
 ```
 
 Searches fal.ai documentation, guides, and API references.
@@ -129,7 +129,7 @@ Searches fal.ai documentation, guides, and API references.
 ### `version` — Show version
 
 ```bash
-falgen version
+genmedia version
 ```
 
 Shows the current version and checks for updates.
@@ -137,35 +137,35 @@ Shows the current version and checks for updates.
 ### `init` — Install Claude Code skills
 
 ```bash
-falgen init
-falgen init --force   # overwrite existing files
+genmedia init
+genmedia init --force   # overwrite existing files
 ```
 
 Installs two skill files into `.claude/commands/` in the current directory:
 
 | File | Purpose |
 |---|---|
-| `falgen-ref.md` | Background reference — Claude loads this automatically when fal.ai work is detected |
-| `falgen.md` | `/falgen` workflow skill — guides through model discovery, schema inspection, and execution |
+| `genmedia-ref.md` | Background reference — Claude loads this automatically when fal.ai work is detected |
+| `genmedia.md` | `/genmedia` workflow skill — guides through model discovery, schema inspection, and execution |
 
-After running `init`, any Claude Code session in that project will have full falgen knowledge without needing to call `--help`. Commit the files so teammates and other agents get the same context.
+After running `init`, any Claude Code session in that project will have full genmedia knowledge without needing to call `--help`. Commit the files so teammates and other agents get the same context.
 
 ## Agent-first design
 
 All commands output structured JSON when piped or called with `--json`:
 
 ```bash
-falgen run fal-ai/flux/dev --prompt "a cat" --json
-falgen search "text to video" | jq '.[]'
+genmedia run fal-ai/flux/dev --prompt "a cat" --json
+genmedia search "text to video" | jq '.[]'
 ```
 
 To get a machine-readable description of all commands for use in a system prompt or agent context:
 
 ```bash
-falgen --help --json
+genmedia --help --json
 ```
 
-This returns a full schema of every command, its arguments, and options. Agents that don't support MCP (Codex, Gemini CLI, etc.) can use fal.ai through `falgen` via standard shell commands.
+This returns a full schema of every command, its arguments, and options. Agents that don't support MCP (Codex, Gemini CLI, etc.) can use fal.ai through `genmedia` via standard shell commands.
 
 ## License
 

@@ -17,7 +17,7 @@ import { join } from "node:path";
 export type OutputFormat = "auto" | "json" | "standard";
 
 // In-memory representation — apiKey is always decrypted here
-export interface FalgenConfig {
+export interface GenmediaConfig {
   apiKey?: string;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
@@ -30,17 +30,17 @@ interface StoredConfig {
   autoLoadEnv?: boolean;
 }
 
-export const CONFIG_DIR = join(userInfo().homedir, ".falgen");
+export const CONFIG_DIR = join(userInfo().homedir, ".genmedia");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
-let _cached: FalgenConfig | null = null;
+let _cached: GenmediaConfig | null = null;
 
 // Derives a 256-bit key from machine identity (hostname + username).
 // Protects against accidental exposure (synced dotfiles, accidental commits,
 // backups) but does not protect against an attacker with access to the same
 // user account on the same machine — for that threat model, use FAL_KEY env var.
 function deriveMachineKey(): Buffer {
-  const identity = `${hostname()}:${userInfo().username}:falgen`;
+  const identity = `${hostname()}:${userInfo().username}:genmedia`;
   return createHash("sha256").update(identity).digest();
 }
 
@@ -72,7 +72,7 @@ function decryptApiKey(ciphertext: string): string | null {
   }
 }
 
-export function loadConfig(): FalgenConfig {
+export function loadConfig(): GenmediaConfig {
   if (_cached !== null) return _cached;
   try {
     if (existsSync(CONFIG_FILE)) {
@@ -95,7 +95,7 @@ export function loadConfig(): FalgenConfig {
   return _cached;
 }
 
-export function saveConfig(config: FalgenConfig): void {
+export function saveConfig(config: GenmediaConfig): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
   }

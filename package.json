@@ -4,10 +4,10 @@
   "description": "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
   "type": "module",
   "bin": {
-    "falgen": "./dist/falgen"
+    "genmedia": "./dist/genmedia"
   },
   "scripts": {
-    "build": "bun run scripts/gen-version.ts && bun build --compile --minify --bytecode src/index.ts --outfile dist/falgen",
+    "build": "bun run scripts/gen-version.ts && bun build --compile --minify --bytecode src/index.ts --outfile dist/genmedia",
     "dev": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",
@@ -22,7 +22,7 @@
     "image",
     "video",
     "audio",
-    "falgen"
+    "genmedia"
   ],
   "dependencies": {
     "@fal-ai/client": "^1.9.4",

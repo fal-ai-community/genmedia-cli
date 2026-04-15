@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import {
   CONFIG_DIR,
-  type FalgenConfig,
+  type GenmediaConfig,
   loadConfig,
   type OutputFormat,
   saveConfig,
@@ -29,8 +29,8 @@ export default defineCommand({
   },
   async run() {
     if (!hasInteractiveTerminal()) {
-      error("`falgen setup` requires an interactive terminal.", {
-        hint: "Set FAL_KEY in your shell profile, or run `falgen setup` from a terminal session.",
+      error("`genmedia setup` requires an interactive terminal.", {
+        hint: "Set FAL_KEY in your shell profile, or run `genmedia setup` from a terminal session.",
       });
     }
 
@@ -38,7 +38,7 @@ export default defineCommand({
     const currentFormat: OutputFormat = current.outputFormat ?? "auto";
 
     printLine();
-    printLine(colors.bold("falgen setup"));
+    printLine(colors.bold("genmedia setup"));
     printLine(colors.dim("Configure your local fal.ai defaults."));
     printLine();
 
@@ -130,7 +130,7 @@ export default defineCommand({
         ],
       });
 
-      const config: FalgenConfig = {
+      const config: GenmediaConfig = {
         ...(apiKey ? { apiKey } : {}),
         outputFormat,
         autoLoadEnv,
