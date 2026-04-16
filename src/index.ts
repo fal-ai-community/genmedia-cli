@@ -1,4 +1,5 @@
-import { defineCommand, runMain } from "citty";
+import { defineCommand, renderUsage, runMain } from "citty";
+import { renderBanner } from "./lib/banner";
 import { loadDotEnv } from "./lib/env";
 import { output } from "./lib/output";
 import { VERSION } from "./lib/version";
@@ -102,6 +103,11 @@ if (
   process.exit(0);
 }
 
+// Rewrite `--version` to `version` subcommand so we get the full banner
+if (process.argv.length === 3 && process.argv[2] === "--version") {
+  process.argv[2] = "version";
+}
+
 const main = defineCommand({
   meta: {
     name: "genmedia",
@@ -122,4 +128,11 @@ const main = defineCommand({
   },
 });
 
-runMain(main);
+runMain(main, {
+  showUsage: async (cmd, parent) => {
+    if (process.stdout.isTTY) {
+      console.log(renderBanner(VERSION, "small"));
+    }
+    console.log((await renderUsage(cmd, parent)) + "\n");
+  },
+});
