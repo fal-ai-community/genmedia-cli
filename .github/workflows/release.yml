@@ -127,6 +127,11 @@ jobs:
           cp dist/darwin-arm64/genmedia release/genmedia-darwin-arm64
           cp dist/windows-x64/genmedia.exe release/genmedia-windows-x64.exe
 
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > checksums.txt
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
