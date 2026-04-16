@@ -3,16 +3,25 @@ name: Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+*"
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Version tag (e.g. v0.1.0)"
+      version:
+        description: "Version to release (e.g., 0.1.0, 0.2.0-alpha.0)"
         required: true
+        type: string
+      dry_run:
+        description: "Dry run (skip creating GitHub release)"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.platform }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,15 +46,33 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate version
-        run: bun run scripts/gen-version.ts
+      - name: Extract version info
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's/^v//')
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify package version
+        run: |
+          PACKAGE_VERSION=$(bun -e "console.log(require('./package.json').version)")
+          if [ "$PACKAGE_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::package.json version ($PACKAGE_VERSION) does not match release version (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
 
       - name: Build binary
         run: |
+          bun run scripts/gen-version.ts
           bun build --compile --minify --bytecode \
             --target=${{ matrix.target }} \
             src/index.ts \
@@ -61,33 +88,50 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    if: ${{ !inputs.dry_run }}
 
     steps:
-      - name: Resolve version
-        id: version
+      - name: Extract release info
+        id: release-info
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
           else
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            TAG="${GITHUB_REF_NAME}"
+            VERSION=$(echo "$TAG" | sed 's/^v//')
           fi
+
+          # Detect pre-release versions (e.g. 0.2.0-alpha.0, 1.0.0-beta.1)
+          if [[ "$VERSION" =~ -([a-zA-Z]+) ]]; then
+            PRERELEASE="true"
+          else
+            PRERELEASE="false"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist/
 
+      - name: Rename artifacts for release
+        run: |
+          mkdir -p release
+          cp dist/linux-x64/genmedia release/genmedia-linux-x64
+          cp dist/linux-arm64/genmedia release/genmedia-linux-arm64
+          cp dist/darwin-x64/genmedia release/genmedia-darwin-x64
+          cp dist/darwin-arm64/genmedia release/genmedia-darwin-arm64
+          cp dist/windows-x64/genmedia.exe release/genmedia-windows-x64.exe
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.release-info.outputs.tag }}
+          name: ${{ steps.release-info.outputs.tag }}
+          prerelease: ${{ steps.release-info.outputs.prerelease }}
           generate_release_notes: true
-          files: |
-            dist/linux-x64/genmedia
-            dist/linux-arm64/genmedia
-            dist/darwin-x64/genmedia
-            dist/darwin-arm64/genmedia
-            dist/windows-x64/genmedia.exe
+          files: release/*
