@@ -106,7 +106,13 @@ function Main {
     Write-Host ""
 
     if ($PathAdded) {
-        Write-Host "Added $BinDir to your PATH." -ForegroundColor White
+        Write-Host "Installed to $BinDir and added to your user PATH." -ForegroundColor White
+        Write-Host "If 'genmedia' is not found in this shell, open a new terminal or refresh PATH:" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  `$env:Path = [Environment]::GetEnvironmentVariable('Path','User') + ';' + [Environment]::GetEnvironmentVariable('Path','Machine')" -ForegroundColor Gray
+        Write-Host ""
+    } else {
+        Write-Host "Installed to $BinDir (already on your PATH)." -ForegroundColor White
         Write-Host ""
     }
 

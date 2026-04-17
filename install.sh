@@ -133,6 +133,29 @@ fetch_checksums() {
     echo "$checksum"
 }
 
+try_symlink_local_bin() {
+    src="$1"
+    local_bin="$HOME/.local/bin"
+
+    if ! mkdir -p "$local_bin" 2>/dev/null; then
+        return 1
+    fi
+
+    if [ ! -d "$local_bin" ] || [ ! -w "$local_bin" ]; then
+        return 1
+    fi
+
+    if ! ln -sf "$src" "${local_bin}/${BINARY_NAME}" 2>/dev/null; then
+        return 1
+    fi
+
+    if echo "$PATH" | tr ':' '\n' | grep -qx "$local_bin"; then
+        return 0
+    fi
+
+    return 2
+}
+
 update_shell_profile() {
     bin_dir="$1"
     export_line="export PATH=\"${bin_dir}:\$PATH\""
@@ -207,24 +230,46 @@ main() {
         PATH_CONFIGURED=false
     fi
 
+    SYMLINK_ON_PATH=false
+    PROFILE_BIN_DIR="$BIN_DIR"
     if [ "$PATH_CONFIGURED" = false ]; then
-        if update_shell_profile "$BIN_DIR"; then
-            PROFILE_UPDATED=true
-        else
-            PROFILE_UPDATED=false
-        fi
+        try_symlink_local_bin "${BIN_DIR}/${BINARY_NAME}"
+        case $? in
+            0)
+                SYMLINK_ON_PATH=true
+                ;;
+            2)
+                PROFILE_BIN_DIR="$HOME/.local/bin"
+                if update_shell_profile "$PROFILE_BIN_DIR"; then
+                    PROFILE_UPDATED=true
+                else
+                    PROFILE_UPDATED=false
+                fi
+                ;;
+            *)
+                if update_shell_profile "$BIN_DIR"; then
+                    PROFILE_UPDATED=true
+                else
+                    PROFILE_UPDATED=false
+                fi
+                ;;
+        esac
     fi
 
     echo ""
     success "genmedia v${VERSION} installed successfully!"
     echo ""
 
-    if [ "$PATH_CONFIGURED" = true ]; then
+    if [ "$SYMLINK_ON_PATH" = true ]; then
+        info "Installed to ${BIN_DIR}, linked into ~/.local/bin."
+        info "Run 'genmedia --help' to get started."
+    elif [ "$PATH_CONFIGURED" = true ]; then
         info "Run 'genmedia --help' to get started."
     elif [ "${PROFILE_UPDATED:-false}" = true ]; then
-        info "Restart your shell or run:"
+        info "Added ${PROFILE_BIN_DIR} to your shell profile."
+        info "Open a new shell, or run this once in the current one:"
         echo ""
-        echo "  export PATH=\"${BIN_DIR}:\$PATH\""
+        echo "  export PATH=\"${PROFILE_BIN_DIR}:\$PATH\""
         echo ""
         info "Then run 'genmedia --help' to get started."
     else
