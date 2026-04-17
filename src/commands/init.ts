@@ -1,92 +1,60 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { defineCommand } from "citty";
 import { isJsonOutput, output } from "../lib/output";
-import { colors, symbols } from "../lib/ui";
-import { GENMEDIA_REF_SKILL, GENMEDIA_WORKFLOW_SKILL } from "../skills/index";
+import { getIndex, installSkill } from "../lib/skills-install";
+import { SKILLS_DIR } from "../lib/skills-registry";
+import { colors, createSpinner, symbols } from "../lib/ui";
 
-const COMMANDS_DIR = ".claude/commands";
-
-const SKILLS: Array<{ filename: string; content: string; label: string }> = [
-  {
-    filename: "genmedia-ref.md",
-    content: GENMEDIA_REF_SKILL,
-    label: "Background reference (auto-loaded by Claude)",
-  },
-  {
-    filename: "genmedia.md",
-    content: GENMEDIA_WORKFLOW_SKILL,
-    label: "Workflow skill (/genmedia)",
-  },
-];
-
-function printLine(line = ""): void {
-  process.stdout.write(`${line}\n`);
-}
+const DEFAULT_BUNDLE = ["genmedia", "genmedia-ref"];
 
 export default defineCommand({
   meta: {
     name: "init",
-    description: "Install Claude Code skills for genmedia into this project",
+    description:
+      "Install the default genmedia skill bundle (alias for `skills install`)",
   },
   args: {
     force: {
       type: "boolean",
-      description: "Overwrite existing skill files",
+      description: "Reinstall even if the skills are already present",
     },
   },
   async run({ args }) {
-    const commandsDir = join(process.cwd(), COMMANDS_DIR);
+    const cwd = process.cwd();
+    const spinner = createSpinner("Fetching registry…");
+    spinner.start();
 
-    if (!existsSync(commandsDir)) {
-      mkdirSync(commandsDir, { recursive: true });
+    const index = await getIndex();
+    spinner.update("Installing default skills…");
+
+    const results: Array<{ name: string; status: string }> = [];
+    for (const name of DEFAULT_BUNDLE) {
+      const result = await installSkill(cwd, name, {
+        force: Boolean(args.force),
+        sharedIndex: index,
+        spinner,
+      });
+      results.push({ name, status: result.status });
     }
 
-    const created: string[] = [];
-    const skipped: string[] = [];
-
-    for (const skill of SKILLS) {
-      const dest = join(commandsDir, skill.filename);
-      const relPath = `${COMMANDS_DIR}/${skill.filename}`;
-
-      if (existsSync(dest) && !args.force) {
-        skipped.push(relPath);
-        continue;
-      }
-
-      writeFileSync(dest, skill.content, "utf-8");
-      created.push(relPath);
-    }
+    spinner.succeed("Default skills installed");
 
     if (isJsonOutput()) {
-      output({ created, skipped });
+      output({ skills: results, skillsDir: SKILLS_DIR });
       return;
     }
 
-    if (created.length > 0) {
-      printLine();
-      for (const skill of SKILLS) {
-        const relPath = `${COMMANDS_DIR}/${skill.filename}`;
-        if (created.includes(relPath)) {
-          printLine(
-            `  ${colors.green(symbols.success)} ${colors.bold(relPath)}  ${colors.dim(skill.label)}`,
-          );
-        }
-      }
-      printLine();
-      printLine(
-        `${colors.dim("Tip: commit these files so all teammates (and agents) get the skills.")}`,
+    process.stdout.write("\n");
+    for (const r of results) {
+      const icon =
+        r.status === "skipped"
+          ? colors.yellow(symbols.warning)
+          : colors.green(symbols.success);
+      process.stdout.write(
+        `  ${icon} ${colors.bold(r.name)}  ${colors.dim(r.status)}\n`,
       );
-      printLine();
     }
-
-    if (skipped.length > 0) {
-      for (const path of skipped) {
-        printLine(
-          `  ${colors.yellow(symbols.warning)} ${path}  ${colors.dim("already exists — use --force to overwrite")}`,
-        );
-      }
-      if (created.length === 0) printLine();
-    }
+    process.stdout.write(
+      `\n${colors.dim(`Tip: commit ${SKILLS_DIR}/ and the symlinks so teammates get the same skills.`)}\n\n`,
+    );
   },
 });

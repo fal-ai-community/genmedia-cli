@@ -2,7 +2,7 @@
 # genmedia installer
 # Usage:
 #   curl -fsSL https://genmedia.sh/install | sh
-#   curl -fsSL https://raw.githubusercontent.com/fal-ai-community/cli/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/install.sh | sh
 #
 # Environment variables:
 #   GENMEDIA_VERSION   - specific version to install (default: latest)

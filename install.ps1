@@ -1,7 +1,7 @@
 # genmedia installer for Windows
 # Usage:
 #   irm https://genmedia.sh/install.ps1 | iex
-#   irm https://raw.githubusercontent.com/fal-ai-community/cli/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/install.ps1 | iex
 #
 # Environment variables:
 #   GENMEDIA_VERSION   - specific version to install (default: latest)

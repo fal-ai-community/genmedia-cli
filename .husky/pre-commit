@@ -1,0 +1,14 @@
+changed="$(git diff --cached --name-only --diff-filter=ACMR -- skills/ || true)"
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+if ! git diff --cached --name-only -- skills/index.json | grep -q .; then
+  bun run skills:index >/dev/null
+  if ! git diff --quiet -- skills/index.json; then
+    git add skills/index.json
+    echo "pre-commit: regenerated and staged skills/index.json"
+  fi
+fi
+
+bun run skills:index:check

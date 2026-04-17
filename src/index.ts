@@ -92,10 +92,27 @@ if (
       },
       init: {
         description:
-          "Install Claude Code skills for genmedia into the current project (.claude/commands/)",
+          "Install the default genmedia skill bundle into the current project (alias for `skills install genmedia genmedia-ref`)",
         usage: "genmedia init [--force]",
         options: {
-          "--force": "Overwrite existing skill files",
+          "--force": "Reinstall skills even if already present",
+        },
+      },
+      skills: {
+        description:
+          "Install, update, and list agent skills from the genmedia registry (installs under .agents/skills/, symlinked into .claude/skills/)",
+        usage: "genmedia skills <list|install|update|remove> [args]",
+        subcommands: {
+          list: "List skills available in the registry",
+          install: "genmedia skills install <name> [--force]",
+          update: "genmedia skills update [<name>]",
+          remove: "genmedia skills remove <name>",
+        },
+        env: {
+          GENMEDIA_SKILLS_URL:
+            "Override the registry base URL (default: https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills)",
+          GENMEDIA_AGENT_LINKS:
+            "Comma-separated list of agent skill dirs to symlink into (default: .claude/skills)",
         },
       },
     },
@@ -117,6 +134,7 @@ const main = defineCommand({
   subCommands: {
     setup: () => import("./commands/setup").then((m) => m.default),
     init: () => import("./commands/init").then((m) => m.default),
+    skills: () => import("./commands/skills/index").then((m) => m.default),
     models: () => import("./commands/models").then((m) => m.default),
     schema: () => import("./commands/schema").then((m) => m.default),
     run: () => import("./commands/run").then((m) => m.default),
