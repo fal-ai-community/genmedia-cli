@@ -102,6 +102,20 @@ export default defineCommand({
       });
 
       printLine();
+      printLine(colors.bold("Automatic updates"));
+      printLine(
+        "  Check for new versions in the background and swap in on next launch.",
+      );
+      printLine(
+        "  Disable with GENMEDIA_NO_UPDATE=1 or by answering no below.",
+      );
+
+      const autoUpdate = await promptConfirm({
+        message: "Enable automatic updates?",
+        initial: current.autoUpdate ?? true,
+      });
+
+      printLine();
       printLine(colors.bold("Default output mode"));
       printLine("  auto     Pretty in a TTY, JSON when piped.");
       printLine("  json     Always structured output.");
@@ -134,6 +148,9 @@ export default defineCommand({
         ...(apiKey ? { apiKey } : {}),
         outputFormat,
         autoLoadEnv,
+        autoUpdate,
+        lastUpdateCheckAt: current.lastUpdateCheckAt,
+        latestKnownVersion: current.latestKnownVersion,
       };
 
       saveConfig(config);
@@ -149,6 +166,7 @@ export default defineCommand({
       }
       printLine(`  Output mode: ${outputFormat}`);
       printLine(`  Auto-load .env: ${autoLoadEnv ? "yes" : "no"}`);
+      printLine(`  Automatic updates: ${autoUpdate ? "yes" : "no"}`);
       printLine();
     } catch (setupError) {
       if (setupError instanceof PromptCancelledError) {

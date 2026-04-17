@@ -21,6 +21,9 @@ export interface GenmediaConfig {
   apiKey?: string;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
+  autoUpdate?: boolean;
+  lastUpdateCheckAt?: number;
+  latestKnownVersion?: string;
 }
 
 // On-disk representation — apiKey is stored encrypted, never plaintext
@@ -28,6 +31,9 @@ interface StoredConfig {
   apiKey?: string;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
+  autoUpdate?: boolean;
+  lastUpdateCheckAt?: number;
+  latestKnownVersion?: string;
 }
 
 export const CONFIG_DIR = join(userInfo().homedir, ".genmedia");
@@ -82,6 +88,9 @@ export function loadConfig(): GenmediaConfig {
       _cached = {
         outputFormat: stored.outputFormat,
         autoLoadEnv: stored.autoLoadEnv,
+        autoUpdate: stored.autoUpdate,
+        lastUpdateCheckAt: stored.lastUpdateCheckAt,
+        latestKnownVersion: stored.latestKnownVersion,
         ...(stored.apiKey
           ? { apiKey: decryptApiKey(stored.apiKey) ?? undefined }
           : {}),
@@ -102,6 +111,9 @@ export function saveConfig(config: GenmediaConfig): void {
   const stored: StoredConfig = {
     outputFormat: config.outputFormat,
     autoLoadEnv: config.autoLoadEnv,
+    autoUpdate: config.autoUpdate,
+    lastUpdateCheckAt: config.lastUpdateCheckAt,
+    latestKnownVersion: config.latestKnownVersion,
     ...(config.apiKey ? { apiKey: encryptApiKey(config.apiKey) } : {}),
   };
   writeFileSync(CONFIG_FILE, JSON.stringify(stored, null, 2), "utf-8");

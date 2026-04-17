@@ -29,6 +29,7 @@ Interactive wizard that configures:
 - **API key** — saved encrypted to your local config (or skip and use `FAL_KEY` in your environment)
 - **Auto-load `.env`** — automatically load `FAL_KEY` and related vars from a project `.env` file
 - **Output mode** — `auto` (pretty in TTY, JSON when piped), `json` (always structured), or `standard` (always human-readable)
+- **Automatic updates** — check for new versions in the background and swap in on next launch (default: on; set `GENMEDIA_NO_UPDATE=1` to disable)
 
 Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys).
 
@@ -134,7 +135,22 @@ Searches fal.ai documentation, guides, and API references.
 genmedia version
 ```
 
-Shows the current version and checks for updates.
+Shows the current version and flags any known update (populated by the background checker).
+
+### `update` — Check for and apply updates
+
+```bash
+genmedia update              # download and swap in the latest release
+genmedia update --check      # only check, don't download
+genmedia update --force      # reinstall even if already on the latest
+```
+
+| Option | Description |
+|---|---|
+| `--check` | Only check for a newer version; don't download |
+| `--force` | Re-download and reinstall even if already on the latest |
+
+When automatic updates are enabled (default), every TTY invocation may trigger a rate-limited (1/hour) background check that stages the next release. The next `genmedia` launch atomically swaps it in. Set `GENMEDIA_NO_UPDATE=1` to disable all background checks; the manual `update` command still works.
 
 ### `init` — Install the default genmedia skill bundle
 

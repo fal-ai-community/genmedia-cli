@@ -41,6 +41,11 @@ These instructions apply to the repository root unless a deeper `AGENTS.md` over
 - Keep environment-variable behavior documented and consistent with help text and README examples.
 - When changing command behavior, update the JSON help schema in `src/index.ts` if the public interface changes.
 
+## Self-update
+
+- All update logic lives in `src/lib/updater.ts`. The `update` command and the background check in `src/index.ts` both go through it — don't reimplement download/checksum/swap logic elsewhere.
+- Startup in `src/index.ts` runs `preSwapPendingUpdate()` first (atomic swap of a staged `.new` binary) and may fire `maybeTriggerBackgroundUpdate()` (detached subprocess, rate-limited to once per hour, TTY-only). Respect `GENMEDIA_NO_UPDATE=1` and `config.autoUpdate` in any update-related code.
+
 ## Skills
 
 - Treat each directory in `skills/` as a published bundle.
