@@ -6,14 +6,16 @@ Works great for humans in a terminal and equally well for AI agents via shell co
 
 ## Install
 
-```bash
-npx genmedia --help
-```
-
-Or install globally:
+For Linux and macOS:
 
 ```bash
 curl https://genmedia.sh/install -fsS | bash
+```
+
+For Windows:
+
+```bash
+irm https://genmedia.sh/install.ps1 | iex
 ```
 
 ## Setup
