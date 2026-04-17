@@ -10,7 +10,7 @@
 
 set -eu
 
-GITHUB_REPO="fal-ai-community/cli"
+GITHUB_REPO="fal-ai-community/genmedia-cli"
 BINARY_NAME="genmedia"
 
 BOLD=""

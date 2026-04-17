@@ -9,7 +9,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$GitHubRepo = "fal-ai-community/cli"
+$GitHubRepo = "fal-ai-community/genmedia-cli"
 $BinaryName = "genmedia"
 
 function Get-LatestVersion {

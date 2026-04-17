@@ -61,3 +61,16 @@ These instructions apply to the repository root unless a deeper `AGENTS.md` over
 
 - Update `README.md` when adding commands, flags, environment variables, install behavior, or agent workflow changes.
 - Keep examples aligned with the actual CLI output and command names.
+
+## Releasing
+
+Releases are driven by version tags (`vX.Y.Z`). Pushing a matching tag triggers `.github/workflows/release.yml`, which builds cross-platform binaries and publishes a GitHub Release with checksums. The workflow verifies `package.json` version matches the tag and fails the build on mismatch.
+
+Steps:
+
+1. Bump `version` in `package.json` to the new `X.Y.Z`.
+2. Commit with `chore: X.Y.Z release`.
+3. Push `main`: `git push origin main`.
+4. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+Pre-release versions (e.g. `0.4.0-alpha.0`) are auto-detected from the version string and marked as pre-release on GitHub.
