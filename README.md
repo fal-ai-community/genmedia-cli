@@ -1,6 +1,6 @@
 # genmedia
 
-Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models.
+Agent-first CLI for fal.ai — search, run, and manage 1200+ model endpoints.
 
 Works great for humans in a terminal and equally well for AI agents via shell commands. In a TTY, commands display a lightweight pretty view; when piped or called with `--json`, they emit structured JSON. No MCP required.
 
@@ -134,21 +134,34 @@ genmedia version
 
 Shows the current version and checks for updates.
 
-### `init` — Install Claude Code skills
+### `init` — Install the default genmedia skill bundle
 
 ```bash
 genmedia init
 genmedia init --force   # overwrite existing files
 ```
 
-Installs two skill files into `.claude/commands/` in the current directory:
+Installs the default genmedia skill bundle:
 
-| File | Purpose |
+| Skill | Purpose |
 |---|---|
-| `genmedia-ref.md` | Background reference — Claude loads this automatically when fal.ai work is detected |
-| `genmedia.md` | `/genmedia` workflow skill — guides through model discovery, schema inspection, and execution |
+| `genmedia-ref` | Background reference for fal.ai work |
+| `genmedia` | Guided workflow for model discovery, schema inspection, and execution |
 
-After running `init`, any Claude Code session in that project will have full genmedia knowledge without needing to call `--help`. Commit the files so teammates and other agents get the same context.
+The bundle is installed into `.agents/skills/` in the current directory and linked into `.claude/skills/` by default.
+
+After running `init`, compatible agent sessions in that project can use the installed skills without needing to call `--help`. Commit `.agents/` and the generated links so teammates and other agents get the same context.
+
+### `skills` — Manage installed agent skills
+
+```bash
+genmedia skills list
+genmedia skills install genmedia
+genmedia skills update
+genmedia skills remove genmedia
+```
+
+Installs, updates, lists, and removes agent skills from the genmedia registry.
 
 ## Agent-first design
 
@@ -156,7 +169,7 @@ All commands output structured JSON when piped or called with `--json`:
 
 ```bash
 genmedia run fal-ai/flux/dev --prompt "a cat" --json
-genmedia search "text to video" | jq '.[]'
+genmedia models "text to video" --json | jq '.models[]'
 ```
 
 To get a machine-readable description of all commands for use in a system prompt or agent context:
