@@ -1,11 +1,12 @@
 import { type CommandDef, defineCommand, renderUsage, runMain } from "citty";
 import { renderBanner } from "./lib/banner";
 import { loadDotEnv } from "./lib/env";
-import { output } from "./lib/output";
+import { isJsonOutput, output, outputRawJson } from "./lib/output";
 import {
   buildDynamicRunCommand,
   isDynamicRunCommand,
   renderDynamicRunUsage,
+  renderDynamicRunUsageJson,
 } from "./lib/run-help";
 import {
   maybeTriggerBackgroundUpdate,
@@ -199,11 +200,15 @@ function startCli(): void {
 
   runMain(main, {
     showUsage: async (cmd, parent) => {
+      const anyCmd = cmd as CommandDef;
+      const anyParent = parent as CommandDef | undefined;
+      if (isDynamicRunCommand(anyCmd) && isJsonOutput()) {
+        outputRawJson(await renderDynamicRunUsageJson(anyCmd, anyParent));
+        return;
+      }
       if (process.stdout.isTTY) {
         console.log(renderBanner(VERSION, "small"));
       }
-      const anyCmd = cmd as CommandDef;
-      const anyParent = parent as CommandDef | undefined;
       const usage = isDynamicRunCommand(anyCmd)
         ? await renderDynamicRunUsage(anyCmd, anyParent)
         : await renderUsage(cmd, parent);

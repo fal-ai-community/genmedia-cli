@@ -243,6 +243,65 @@ async function resolve<T>(
   return typeof value === "function" ? await (value as () => T)() : await value;
 }
 
+function buildUsageString(
+  commandName: string,
+  positionals: ResolvedArg[],
+  options: ResolvedArg[],
+): string {
+  const usageLine: string[] = [];
+  for (const arg of positionals) {
+    const name = arg.name.toUpperCase();
+    const req = arg.required !== false && arg.default === undefined;
+    usageLine.push(req ? `<${name}>` : `[${name}]`);
+  }
+  for (const arg of options) {
+    if (isRequiredOption(arg)) usageLine.push(formatFlagStr(arg));
+  }
+  const hasOptions = options.length > 0;
+  const tail = usageLine.length ? ` ${usageLine.join(" ")}` : "";
+  return `${commandName}${hasOptions ? " [OPTIONS]" : ""}${tail}`;
+}
+
+export async function renderDynamicRunUsageJson(
+  cmd: CommandDef,
+  parent?: CommandDef,
+): Promise<Record<string, unknown>> {
+  const cmdMeta = (await resolve(cmd.meta)) ?? {};
+  const parentMeta = (await resolve(parent?.meta)) ?? {};
+  const argsDef = (await resolve(cmd.args)) ?? {};
+  const allArgs = resolveArgList(argsDef);
+
+  const commandName = `${parentMeta.name ? `${parentMeta.name} ` : ""}${cmdMeta.name ?? "run"}`;
+  const positionals = allArgs.filter((a) => a.type === "positional");
+  const options = allArgs.filter((a) => a.type !== "positional");
+
+  const endpointIdArg = positionals.find((p) => p.name === "endpointId");
+
+  return {
+    name: cmdMeta.name ?? "run",
+    ...(cmdMeta.description ? { description: cmdMeta.description } : {}),
+    ...(endpointIdArg?.default !== undefined
+      ? { endpoint_id: String(endpointIdArg.default) }
+      : {}),
+    usage: buildUsageString(commandName, positionals, options),
+    arguments: positionals.map((arg) => ({
+      name: arg.name,
+      type: "positional",
+      required: arg.required !== false && arg.default === undefined,
+      ...(arg.default !== undefined ? { default: arg.default } : {}),
+      ...(arg.description ? { description: arg.description } : {}),
+    })),
+    options: options.map((arg) => ({
+      flag: `--${arg.name}`,
+      type: arg.type ?? "string",
+      required: isRequiredOption(arg),
+      ...(arg.default !== undefined ? { default: arg.default } : {}),
+      ...(arg.options ? { enum: arg.options } : {}),
+      ...(arg.description ? { description: arg.description } : {}),
+    })),
+  };
+}
+
 export async function renderDynamicRunUsage(
   cmd: CommandDef,
   parent?: CommandDef,
