@@ -80,9 +80,10 @@ genmedia run fal-ai/flux/dev --prompt "a cat on the moon"
 genmedia run fal-ai/flux/dev --prompt "a cat" --num_images 2
 genmedia run fal-ai/flux/dev --prompt "a cat" --logs
 genmedia run fal-ai/veo3.1 --prompt "a dog running" --async
+genmedia run fal-ai/flux/dev --help    # introspect model inputs as CLI help
 ```
 
-Any model input parameter can be passed as a `--flag value` pair. `genmedia schema <endpoint_id>` shows what parameters a model accepts.
+Any model input parameter can be passed as a `--flag value` pair. Run `genmedia run <endpoint_id> --help` to see a model's accepted parameters rendered as CLI flags, or `genmedia schema <endpoint_id>` for the same info as structured JSON.
 
 | Option | Description |
 |---|---|

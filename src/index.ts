@@ -1,7 +1,12 @@
-import { defineCommand, renderUsage, runMain } from "citty";
+import { type CommandDef, defineCommand, renderUsage, runMain } from "citty";
 import { renderBanner } from "./lib/banner";
 import { loadDotEnv } from "./lib/env";
 import { output } from "./lib/output";
+import {
+  buildDynamicRunCommand,
+  isDynamicRunCommand,
+  renderDynamicRunUsage,
+} from "./lib/run-help";
 import {
   maybeTriggerBackgroundUpdate,
   preSwapPendingUpdate,
@@ -73,6 +78,8 @@ function startCli(): void {
             "--async":
               "Submit to queue instead of waiting (returns request_id)",
             "--logs": "Stream logs in pretty terminal mode",
+            "--help":
+              "Introspect the model and render its input schema as CLI help",
           },
         },
         upload: {
@@ -170,7 +177,17 @@ function startCli(): void {
       skills: () => import("./commands/skills/index").then((m) => m.default),
       models: () => import("./commands/models").then((m) => m.default),
       schema: () => import("./commands/schema").then((m) => m.default),
-      run: () => import("./commands/run").then((m) => m.default),
+      run: async () => {
+        const argv = process.argv.slice(2);
+        if (argv[0] === "run" && argv.includes("--help")) {
+          const endpointId = argv[1];
+          if (endpointId && !endpointId.startsWith("--")) {
+            const dynamic = await buildDynamicRunCommand(endpointId);
+            if (dynamic) return dynamic;
+          }
+        }
+        return (await import("./commands/run")).default;
+      },
       status: () => import("./commands/status").then((m) => m.default),
       upload: () => import("./commands/upload").then((m) => m.default),
       pricing: () => import("./commands/pricing").then((m) => m.default),
@@ -185,7 +202,12 @@ function startCli(): void {
       if (process.stdout.isTTY) {
         console.log(renderBanner(VERSION, "small"));
       }
-      console.log(`${await renderUsage(cmd, parent)}\n`);
+      const anyCmd = cmd as CommandDef;
+      const anyParent = parent as CommandDef | undefined;
+      const usage = isDynamicRunCommand(anyCmd)
+        ? await renderDynamicRunUsage(anyCmd, anyParent)
+        : await renderUsage(cmd, parent);
+      console.log(`${usage}\n`);
     },
   });
 }
