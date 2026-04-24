@@ -98,6 +98,8 @@ genmedia run fal-ai/flux/dev --prompt "a cat on the moon"
 genmedia run fal-ai/flux/dev --prompt "a cat" --num_images 2
 genmedia run fal-ai/flux/dev --prompt "a cat" --logs
 genmedia run fal-ai/veo3.1 --prompt "a dog running" --async
+genmedia run fal-ai/flux/dev --prompt "a cat" --download                               # save to cwd with source file names
+genmedia run fal-ai/flux/dev --prompt "a cat" --num_images 3 --download "./out/{index}.{ext}"
 genmedia run fal-ai/flux/dev --help    # introspect model inputs as CLI help
 ```
 
@@ -108,6 +110,7 @@ Any model input parameter can be passed as a `--flag value` pair. Run `genmedia 
 | `--<param>` | Any model input parameter (e.g. `--prompt`, `--num_images`) |
 | `--logs` | Stream logs while the model runs (pretty terminal mode only) |
 | `--async` | Submit to queue without waiting — returns a `request_id` |
+| `--download [template]` | Download every media URL in the result. Optional value is a path or filename template with `{index}`, `{name}`, `{ext}`, `{request_id}` placeholders. Omitted → cwd with source file names. Trailing `/` or an existing directory → dir + source file names. Plain filename with multiple outputs → `_1`, `_2` suffixes on collision. Downloaded paths appear in JSON output under `downloaded_files`. |
 
 ### `status` — Check an async job
 
@@ -116,6 +119,7 @@ genmedia status fal-ai/veo3.1 <request_id>
 genmedia status fal-ai/veo3.1 <request_id> --result
 genmedia status fal-ai/veo3.1 <request_id> --logs
 genmedia status fal-ai/veo3.1 <request_id> --cancel
+genmedia status fal-ai/veo3.1 <request_id> --download ./out/   # implies --result
 ```
 
 | Option | Description |
@@ -123,6 +127,7 @@ genmedia status fal-ai/veo3.1 <request_id> --cancel
 | `--result` | Fetch the completed result |
 | `--logs` | Show logs verbosely |
 | `--cancel` | Cancel the queued job |
+| `--download [template]` | Same as on `run`. Implies `--result` — fetches the completed result and writes media files to disk. |
 
 ### `upload` — Upload files to fal.ai CDN
 

@@ -1,5 +1,6 @@
 import type { OutputFormat } from "./config";
 import { loadConfig } from "./config";
+import { formatBytes } from "./download";
 import { colors, symbols } from "./ui";
 
 type OutputMode = "json" | "pretty";
@@ -163,12 +164,50 @@ function printPrettyValue(
   writeLine(`${pad}${formatScalar(data)}`);
 }
 
+function printDownloadedFiles(
+  files: unknown[],
+  writeLine: (line?: string) => void,
+): void {
+  for (const item of files) {
+    if (!isRecord(item)) continue;
+    const path = typeof item.path === "string" ? item.path : "?";
+    const size =
+      typeof item.size_bytes === "number"
+        ? colors.dim(` (${formatBytes(item.size_bytes)})`)
+        : "";
+    const source =
+      typeof item.json_path === "string"
+        ? colors.dim(` ← ${item.json_path}`)
+        : "";
+    writeLine(`  ${symbols.bullet} ${path}${size}${source}`);
+  }
+}
+
+function printDownloadFailures(
+  failures: unknown[],
+  writeLine: (line?: string) => void,
+): void {
+  for (const item of failures) {
+    if (!isRecord(item)) continue;
+    const url = typeof item.url === "string" ? item.url : "?";
+    const jsonPath =
+      typeof item.json_path === "string"
+        ? colors.dim(` [${item.json_path}]`)
+        : "";
+    const message =
+      typeof item.error === "string" ? item.error : JSON.stringify(item);
+    writeLine(
+      `  ${colors.red(symbols.bullet)} ${url}${jsonPath}: ${colors.red(message)}`,
+    );
+  }
+}
+
 function printJobView(
   data: Record<string, unknown>,
   options: OutputOptions,
   writeLine: (line?: string) => void,
 ): void {
-  const { logs, result, ...rest } = data;
+  const { logs, result, downloaded_files, download_failures, ...rest } = data;
   const status =
     typeof data.status === "string"
       ? data.status
@@ -191,6 +230,18 @@ function printJobView(
     writeLine();
     writeLine(colors.bold("Result"));
     printPrettyValue(result, writeLine, 1);
+  }
+
+  if (Array.isArray(downloaded_files) && downloaded_files.length > 0) {
+    writeLine();
+    writeLine(colors.bold("Downloaded"));
+    printDownloadedFiles(downloaded_files, writeLine);
+  }
+
+  if (Array.isArray(download_failures) && download_failures.length > 0) {
+    writeLine();
+    writeLine(colors.bold(colors.red("Download failures")));
+    printDownloadFailures(download_failures, writeLine);
   }
 
   if (Array.isArray(logs) && logs.length > 0) {

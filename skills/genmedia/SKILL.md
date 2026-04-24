@@ -45,8 +45,24 @@ skill for the full command reference.
      genmedia status <endpoint_id> <request_id> --result --json
      ```
 
-5. **Return** the result to the user. If the result contains URLs (images,
-   video, audio), present them clearly.
+5. **Save outputs** — when the user expects files on disk, add `--download`
+   to `run` or `status`. The CLI writes every media URL from the result to
+   the filesystem and returns the local paths in `downloaded_files[]`. Do
+   **not** `curl` the URLs yourself; use the flag.
+   ```
+   genmedia run fal-ai/flux/dev --prompt "a cat" --download --json                            # cwd, source file names
+   genmedia run fal-ai/flux/dev --prompt "a cat" --num_images 3 --download "./out/{index}.{ext}" --json
+   genmedia status <endpoint_id> <request_id> --download ./out/ --json                        # implies --result
+   ```
+   Use `{index}`, `{name}`, `{ext}`, `{request_id}` placeholders in the
+   template when the model returns multiple files (`images[]`,
+   `image_urls[]`, etc.) to avoid filename collisions. A trailing `/` or
+   an existing directory path saves files under that directory using their
+   source names.
+
+6. **Return** the result to the user. If `--download` was used, reference
+   the paths from `downloaded_files[]`; otherwise present the URLs from
+   `result` clearly.
 
 ## Handling errors
 

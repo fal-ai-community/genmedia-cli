@@ -1,6 +1,11 @@
 import { fal } from "@fal-ai/client";
 import { defineCommand } from "citty";
 import { configureSDK } from "../lib/api";
+import {
+  downloadMedia,
+  extractMediaRefs,
+  parseDownloadFlag,
+} from "../lib/download";
 import { formatApiError } from "../lib/error-format";
 import { error, isPrettyOutput, output } from "../lib/output";
 import { parseValue } from "../lib/parse-value";
@@ -32,16 +37,29 @@ export default defineCommand({
       type: "boolean",
       description: "Stream logs while the model runs in pretty terminal mode",
     },
+    download: {
+      type: "string",
+      description:
+        "Download media from the result. Optional value is a path or template with {index}, {name}, {ext}, {request_id}",
+    },
   },
   async run({ args }) {
     configureSDK();
 
     const { endpointId } = args;
 
-    // Extract arbitrary model input params from process.argv (citty can't enumerate them)
     const argv = process.argv.slice(2);
+    const download = parseDownloadFlag(argv);
+
+    // Extract arbitrary model input params from process.argv (citty can't enumerate them)
     const input: Record<string, unknown> = {};
-    const skipFlags = new Set(["--async", "--json", "--help", "--logs"]);
+    const skipFlags = new Set([
+      "--async",
+      "--json",
+      "--help",
+      "--logs",
+      "--download",
+    ]);
     for (let i = 0; i < argv.length; i++) {
       const a = argv[i];
       if (a.startsWith("--") && !skipFlags.has(a)) {
@@ -52,6 +70,9 @@ export default defineCommand({
         } else {
           input[a.slice(2)] = true;
         }
+      } else if (a === "--download") {
+        const next = argv[i + 1];
+        if (next && !next.startsWith("--")) i++;
       }
     }
 
@@ -111,12 +132,47 @@ export default defineCommand({
       requestId = result.requestId;
       spinner?.succeed(`Run completed (${result.requestId})`);
 
+      let downloaded: Awaited<ReturnType<typeof downloadMedia>> | undefined;
+      if (download.mode === "on") {
+        const refs = extractMediaRefs(result.data);
+        if (refs.length > 0) {
+          const spinnerDl = prettyMode
+            ? createSpinner(`Downloading ${refs.length} file(s)`)
+            : null;
+          spinnerDl?.start(`Downloading ${refs.length} file(s)`);
+          downloaded = await downloadMedia({
+            refs,
+            template: download.template,
+            requestId: result.requestId,
+          });
+          if (downloaded.failed.length === 0) {
+            spinnerDl?.succeed(
+              `Downloaded ${downloaded.downloaded.length} file(s)`,
+            );
+          } else if (downloaded.downloaded.length === 0) {
+            spinnerDl?.fail(
+              `All ${downloaded.failed.length} download(s) failed`,
+            );
+          } else {
+            spinnerDl?.fail(
+              `Downloaded ${downloaded.downloaded.length}, ${downloaded.failed.length} failed`,
+            );
+          }
+        } else {
+          downloaded = { downloaded: [], failed: [] };
+        }
+      }
+
       output(
         {
           status: "completed",
           endpoint_id: endpointId,
           request_id: result.requestId,
           result: result.data,
+          ...(downloaded ? { downloaded_files: downloaded.downloaded } : {}),
+          ...(downloaded && downloaded.failed.length > 0
+            ? { download_failures: downloaded.failed }
+            : {}),
           ...(logs.length > 0 ? { logs } : {}),
         },
         { view: "run", showLogs },

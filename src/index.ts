@@ -73,13 +73,16 @@ function startCli(): void {
         },
         run: {
           description: "Run any model (waits for result)",
-          usage: "genmedia run <endpoint_id> [--key value ...] [--logs]",
+          usage:
+            "genmedia run <endpoint_id> [--key value ...] [--logs] [--download [template]]",
           args: "<endpoint_id>",
           options: {
             "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
             "--async":
               "Submit to queue instead of waiting (returns request_id)",
             "--logs": "Stream logs in pretty terminal mode",
+            "--download":
+              "Download media from the result. Optional value is a path or template with {index}, {name}, {ext}, {request_id} (defaults to cwd with source file names)",
             "--help":
               "Introspect the model and render its input schema as CLI help",
           },
@@ -92,12 +95,14 @@ function startCli(): void {
         status: {
           description: "Check job status or get result",
           usage:
-            "genmedia status <endpoint_id> <request_id> [--result] [--cancel] [--logs]",
+            "genmedia status <endpoint_id> <request_id> [--result] [--cancel] [--logs] [--download [template]]",
           args: "<endpoint_id> <request_id>",
           options: {
             "--result": "Fetch the completed result",
             "--cancel": "Cancel the job",
             "--logs": "Show logs verbosely in pretty terminal mode",
+            "--download":
+              "Download media from the result (implies --result). Optional value is a path or template with {index}, {name}, {ext}, {request_id}",
           },
         },
         pricing: {
