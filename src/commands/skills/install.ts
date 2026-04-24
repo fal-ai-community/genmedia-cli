@@ -1,7 +1,6 @@
 import { defineCommand } from "citty";
 import { isJsonOutput, output } from "../../lib/output";
 import { installSkill } from "../../lib/skills-install";
-import { SKILLS_DIR } from "../../lib/skills-registry";
 import { colors } from "../../lib/ui";
 
 export default defineCommand({
@@ -26,10 +25,7 @@ export default defineCommand({
     });
 
     if (isJsonOutput()) {
-      output({
-        ...result,
-        skillsDir: SKILLS_DIR,
-      });
+      output(result);
       return;
     }
 
@@ -39,15 +35,10 @@ export default defineCommand({
 
     process.stdout.write("\n");
     process.stdout.write(
-      `  ${colors.bold(result.name)}  ${colors.dim(`→ ${SKILLS_DIR}/${result.name}`)}\n`,
+      `  ${colors.bold(result.name)}  ${colors.dim(`→ ${result.installedDir}`)}\n`,
     );
-    for (const link of result.agentLinks) {
-      process.stdout.write(
-        `    ${colors.dim(`↳ ${link.path} (${link.kind})`)}\n`,
-      );
-    }
     process.stdout.write(
-      `\n${colors.dim("Commit .agents/ and the symlinks so teammates get the same skills.")}\n\n`,
+      `\n${colors.dim(`Commit ${result.installedDir} so teammates get the same skills.`)}\n\n`,
     );
   },
 });

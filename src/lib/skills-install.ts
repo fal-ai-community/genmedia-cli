@@ -1,17 +1,15 @@
 import { error } from "./output";
 import {
+  AGENT_ROOTS,
   fetchIndex,
   fetchSkillFile,
   findSkill,
-  getAgentLinkPaths,
   getRegistryUrl,
   type InstalledSkill,
-  type LinkResult,
-  linkSkillForAgent,
   readInstalledManifest,
-  removeAgentLink,
   removeInstalled,
   removeSkillDir,
+  resolveSkillsBase,
   type SkillsIndex,
   sha256,
   upsertInstalled,
@@ -30,7 +28,7 @@ export interface InstallOptions {
 export interface InstallResult {
   name: string;
   status: "installed" | "updated" | "skipped";
-  agentLinks: LinkResult[];
+  installedDir: string;
   files: string[];
 }
 
@@ -45,11 +43,24 @@ export async function getIndex(): Promise<SkillsIndex> {
   }
 }
 
+function requireSkillsBase(cwd: string): string {
+  const base = resolveSkillsBase(cwd);
+  if (!base) {
+    error(
+      `No agent directory found. Create '${AGENT_ROOTS[0]}/' or '${AGENT_ROOTS[1]}/' in this project and try again.`,
+      { checked: AGENT_ROOTS.map((r) => `${r}/`) },
+    );
+  }
+  return base;
+}
+
 export async function installSkill(
   cwd: string,
   name: string,
   options: InstallOptions = {},
 ): Promise<InstallResult> {
+  const base = requireSkillsBase(cwd);
+
   const spinner = options.spinner ?? createSpinner();
   const ownSpinner = !options.spinner;
   if (ownSpinner && !options.silent) spinner.start(`Fetching registry…`);
@@ -77,7 +88,7 @@ export async function installSkill(
     return {
       name,
       status: "skipped",
-      agentLinks: [],
+      installedDir: `${base}/${name}`,
       files: entry.files.map((f) => f.path),
     };
   }
@@ -98,10 +109,7 @@ export async function installSkill(
     files.push({ path: f.path, content });
   }
 
-  writeSkillFiles(cwd, name, files);
-  const agentLinks = getAgentLinkPaths().map((p) =>
-    linkSkillForAgent(cwd, name, p),
-  );
+  writeSkillFiles(cwd, base, name, files);
 
   const record: InstalledSkill = {
     name: entry.name,
@@ -110,10 +118,9 @@ export async function installSkill(
     sha256: Object.fromEntries(entry.files.map((f) => [f.path, f.sha256])),
     installedAt: new Date().toISOString(),
     source: `${getRegistryUrl()}/${name}`,
-    agentLinks,
   };
   manifest = upsertInstalled(manifest, record);
-  writeInstalledManifest(cwd, manifest);
+  writeInstalledManifest(cwd, base, manifest);
 
   if (ownSpinner && !options.silent) {
     spinner.succeed(
@@ -128,7 +135,7 @@ export async function installSkill(
   return {
     name,
     status: already ? "updated" : "installed",
-    agentLinks,
+    installedDir: `${base}/${name}`,
     files: entry.files.map((f) => f.path),
   };
 }
@@ -136,22 +143,21 @@ export async function installSkill(
 export function uninstallSkill(
   cwd: string,
   name: string,
-): { removed: boolean; links: string[] } {
-  let manifest = readInstalledManifest(cwd);
-  const entry = manifest.skills.find((s) => s.name === name);
-  const removedLinks: string[] = [];
-
-  for (const link of entry?.agentLinks ?? []) {
-    const parts = link.path.split("/");
-    const basePath = parts.slice(0, -1).join("/");
-    if (removeAgentLink(cwd, name, basePath)) {
-      removedLinks.push(link.path);
-    }
+): { removed: boolean; installedDir: string | null } {
+  const base = resolveSkillsBase(cwd);
+  if (!base) {
+    return { removed: false, installedDir: null };
   }
 
-  const fileRemoved = removeSkillDir(cwd, name);
-  manifest = removeInstalled(manifest, name);
-  writeInstalledManifest(cwd, manifest);
+  let manifest = readInstalledManifest(cwd);
+  const entry = manifest.skills.find((s) => s.name === name);
 
-  return { removed: Boolean(entry) || fileRemoved, links: removedLinks };
+  const fileRemoved = removeSkillDir(cwd, base, name);
+  manifest = removeInstalled(manifest, name);
+  writeInstalledManifest(cwd, base, manifest);
+
+  return {
+    removed: Boolean(entry) || fileRemoved,
+    installedDir: `${base}/${name}`,
+  };
 }

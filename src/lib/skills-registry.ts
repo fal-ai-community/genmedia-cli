@@ -1,23 +1,19 @@
 import { createHash } from "node:crypto";
 import {
-  chmodSync,
-  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
-  symlinkSync,
-  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 
 const DEFAULT_REGISTRY_URL =
   "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills";
-const DEFAULT_AGENT_LINKS = [".claude/skills"];
 
-export const SKILLS_DIR = ".agents/skills";
-export const INSTALLED_MANIFEST = join(SKILLS_DIR, ".installed.json");
+export const AGENT_ROOTS = [".agents", ".claude"] as const;
+const SKILLS_SUBDIR = "skills";
+const INSTALLED_MANIFEST_FILE = ".installed.json";
 
 export interface SkillFileEntry {
   path: string;
@@ -43,7 +39,6 @@ export interface InstalledSkill {
   sha256: Record<string, string>;
   installedAt: string;
   source: string;
-  agentLinks: Array<{ path: string; kind: "symlink" | "junction" | "copy" }>;
 }
 
 export interface InstalledManifest {
@@ -58,13 +53,13 @@ export function getRegistryUrl(): string {
   );
 }
 
-export function getAgentLinkPaths(): string[] {
-  const env = process.env.GENMEDIA_AGENT_LINKS;
-  if (!env) return DEFAULT_AGENT_LINKS;
-  return env
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+export function resolveSkillsBase(cwd: string): string | null {
+  for (const root of AGENT_ROOTS) {
+    if (existsSync(join(cwd, root))) {
+      return join(root, SKILLS_SUBDIR);
+    }
+  }
+  return null;
 }
 
 async function fetchText(url: string): Promise<string> {
@@ -110,10 +105,11 @@ function resolveInsideRoot(root: string, relPath: string): string {
 
 export function writeSkillFiles(
   cwd: string,
+  base: string,
   skill: string,
   files: Array<{ path: string; content: string }>,
 ): string {
-  const skillRoot = join(cwd, SKILLS_DIR, skill);
+  const skillRoot = join(cwd, base, skill);
   if (existsSync(skillRoot)) {
     rmSync(skillRoot, { recursive: true, force: true });
   }
@@ -127,15 +123,21 @@ export function writeSkillFiles(
   return skillRoot;
 }
 
-export function removeSkillDir(cwd: string, skill: string): boolean {
-  const skillRoot = join(cwd, SKILLS_DIR, skill);
+export function removeSkillDir(
+  cwd: string,
+  base: string,
+  skill: string,
+): boolean {
+  const skillRoot = join(cwd, base, skill);
   if (!existsSync(skillRoot)) return false;
   rmSync(skillRoot, { recursive: true, force: true });
   return true;
 }
 
 export function readInstalledManifest(cwd: string): InstalledManifest {
-  const path = join(cwd, INSTALLED_MANIFEST);
+  const base = resolveSkillsBase(cwd);
+  if (!base) return { version: 1, skills: [] };
+  const path = join(cwd, base, INSTALLED_MANIFEST_FILE);
   if (!existsSync(path)) return { version: 1, skills: [] };
   try {
     const parsed = JSON.parse(readFileSync(path, "utf-8")) as InstalledManifest;
@@ -150,9 +152,10 @@ export function readInstalledManifest(cwd: string): InstalledManifest {
 
 export function writeInstalledManifest(
   cwd: string,
+  base: string,
   manifest: InstalledManifest,
 ): void {
-  const path = join(cwd, INSTALLED_MANIFEST);
+  const path = join(cwd, base, INSTALLED_MANIFEST_FILE);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, "utf-8");
 }
@@ -175,76 +178,6 @@ export function removeInstalled(
     ...manifest,
     skills: manifest.skills.filter((s) => s.name !== name),
   };
-}
-
-export interface LinkResult {
-  path: string;
-  kind: "symlink" | "junction" | "copy";
-}
-
-function copyDirSync(src: string, dest: string): void {
-  mkdirSync(dirname(dest), { recursive: true });
-  rmSync(dest, { recursive: true, force: true });
-  cpSync(src, dest, { recursive: true });
-}
-
-export function linkSkillForAgent(
-  cwd: string,
-  skill: string,
-  linkPath: string,
-): LinkResult {
-  const source = resolve(cwd, SKILLS_DIR, skill);
-  const target = resolve(cwd, linkPath, skill);
-
-  mkdirSync(dirname(target), { recursive: true });
-
-  if (existsSync(target)) {
-    try {
-      unlinkSync(target);
-    } catch {
-      rmSync(target, { recursive: true, force: true });
-    }
-  }
-
-  const relSource = relative(dirname(target), source);
-
-  if (process.platform === "win32") {
-    try {
-      symlinkSync(source, target, "junction");
-      return { path: join(linkPath, skill), kind: "junction" };
-    } catch {
-      copyDirSync(source, target);
-      return { path: join(linkPath, skill), kind: "copy" };
-    }
-  }
-
-  try {
-    symlinkSync(relSource, target, "dir");
-    try {
-      chmodSync(target, 0o755);
-    } catch {
-      // chmod of a symlink target is best-effort
-    }
-    return { path: join(linkPath, skill), kind: "symlink" };
-  } catch {
-    copyDirSync(source, target);
-    return { path: join(linkPath, skill), kind: "copy" };
-  }
-}
-
-export function removeAgentLink(
-  cwd: string,
-  skill: string,
-  linkPath: string,
-): boolean {
-  const target = resolve(cwd, linkPath, skill);
-  if (!existsSync(target)) return false;
-  try {
-    unlinkSync(target);
-  } catch {
-    rmSync(target, { recursive: true, force: true });
-  }
-  return true;
 }
 
 export function findSkill(

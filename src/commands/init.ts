@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { isJsonOutput, output } from "../lib/output";
 import { getIndex, installSkill } from "../lib/skills-install";
-import { SKILLS_DIR } from "../lib/skills-registry";
+import { resolveSkillsBase } from "../lib/skills-registry";
 import { colors, createSpinner, symbols } from "../lib/ui";
 
 const DEFAULT_BUNDLE = ["genmedia", "genmedia-ref"];
@@ -26,20 +26,30 @@ export default defineCommand({
     const index = await getIndex();
     spinner.update("Installing default skills…");
 
-    const results: Array<{ name: string; status: string }> = [];
+    const results: Array<{
+      name: string;
+      status: string;
+      installedDir: string;
+    }> = [];
     for (const name of DEFAULT_BUNDLE) {
       const result = await installSkill(cwd, name, {
         force: Boolean(args.force),
         sharedIndex: index,
         spinner,
       });
-      results.push({ name, status: result.status });
+      results.push({
+        name,
+        status: result.status,
+        installedDir: result.installedDir,
+      });
     }
 
     spinner.succeed("Default skills installed");
 
+    const skillsBase = resolveSkillsBase(cwd);
+
     if (isJsonOutput()) {
-      output({ skills: results, skillsDir: SKILLS_DIR });
+      output({ skills: results, skillsDir: skillsBase });
       return;
     }
 
@@ -53,8 +63,12 @@ export default defineCommand({
         `  ${icon} ${colors.bold(r.name)}  ${colors.dim(r.status)}\n`,
       );
     }
-    process.stdout.write(
-      `\n${colors.dim(`Tip: commit ${SKILLS_DIR}/ and the symlinks so teammates get the same skills.`)}\n\n`,
-    );
+    if (skillsBase) {
+      process.stdout.write(
+        `\n${colors.dim(`Tip: commit ${skillsBase}/ so teammates get the same skills.`)}\n\n`,
+      );
+    } else {
+      process.stdout.write("\n");
+    }
   },
 });

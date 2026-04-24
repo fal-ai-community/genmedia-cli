@@ -16,10 +16,10 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const { removed, links } = uninstallSkill(process.cwd(), args.name);
+    const { removed, installedDir } = uninstallSkill(process.cwd(), args.name);
 
     if (isJsonOutput()) {
-      output({ name: args.name, removed, links });
+      output({ name: args.name, removed, installedDir });
       return;
     }
 
