@@ -1,5 +1,6 @@
 import { type CommandDef, defineCommand, renderUsage, runMain } from "citty";
 import { renderBanner } from "./lib/banner";
+import { loadConfig } from "./lib/config";
 import { loadDotEnv } from "./lib/env";
 import { isJsonOutput, output, outputRawJson } from "./lib/output";
 import {
@@ -42,7 +43,7 @@ function startCli(): void {
       install: "curl https://genmedia.sh/install -fsS | bash",
       env: {
         FAL_KEY:
-          "Your fal.ai API key. Can also be set via `genmedia setup`. Get one at https://fal.ai/dashboard/keys",
+          "Your fal.ai API key. Can also be set via `genmedia setup` (interactive) or `genmedia setup --non-interactive --api-key <key>` (for agents/CI). Get one at https://fal.ai/dashboard/keys",
       },
       commands: {
         models: {
@@ -128,8 +129,23 @@ function startCli(): void {
           },
         },
         setup: {
-          description: "Configure your fal.ai API key and preferences",
-          usage: "genmedia setup",
+          description:
+            "Configure your fal.ai API key and preferences (supports non-interactive mode for agents/CI)",
+          usage:
+            "genmedia setup [--non-interactive --api-key <key> --output-format <auto|json|standard> [--no-]auto-load-env [--no-]auto-update]",
+          options: {
+            "--non-interactive":
+              "Skip all prompts. Required to run without a TTY. Alias: -y. Fields not passed keep their current values.",
+            "--api-key":
+              "API key to save when running with --non-interactive. Pass an empty string to clear the saved key.",
+            "--no-save-key":
+              "With --api-key, don't persist the key to config.json (use FAL_KEY at runtime instead).",
+            "--output-format": "Default output mode: auto, json, or standard.",
+            "--auto-load-env":
+              "Auto-load FAL_KEY and related vars from a local .env. Use --no-auto-load-env to disable.",
+            "--auto-update":
+              "Enable background update checks. Use --no-auto-update to disable.",
+          },
         },
         init: {
           description:
@@ -213,6 +229,16 @@ function startCli(): void {
         ? await renderDynamicRunUsage(anyCmd, anyParent)
         : await renderUsage(cmd, parent);
       console.log(`${usage}\n`);
+
+      if (!isJsonOutput() && !process.env.FAL_KEY && !loadConfig().apiKey) {
+        console.log(
+          "Tip: set FAL_KEY in your environment or run `genmedia setup` before using model commands.",
+        );
+        console.log(
+          '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
+        );
+        console.log();
+      }
     },
   });
 }

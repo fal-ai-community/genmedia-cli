@@ -8,7 +8,12 @@ export function getApiKey(): string {
   const key = process.env.FAL_KEY ?? loadConfig().apiKey;
   if (!key) {
     error("No fal.ai API key found.", {
-      hint: "Run `genmedia setup` to configure your key, or set the FAL_KEY environment variable.\nGet one at https://fal.ai/dashboard/keys",
+      hint: [
+        "Set FAL_KEY in your environment, or",
+        "run `genmedia setup` (interactive), or",
+        "run `genmedia setup --non-interactive --api-key <key>` (for agents/CI).",
+        "Get one at https://fal.ai/dashboard/keys",
+      ].join("\n"),
     });
   }
   return key as string;

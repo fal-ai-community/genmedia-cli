@@ -39,6 +39,24 @@ To skip the wizard, set the key in your environment:
 export FAL_KEY=your_fal_api_key
 ```
 
+### Non-interactive setup (agents / CI)
+
+```bash
+genmedia setup --non-interactive --api-key "$FAL_KEY"
+genmedia setup --non-interactive --output-format json --no-auto-load-env --auto-update
+```
+
+Every flag is optional — fields you don't pass keep their current values, so repeated invocations are idempotent.
+
+| Flag | Description |
+|---|---|
+| `--non-interactive`, `-y` | Skip all prompts. Required when there is no TTY. |
+| `--api-key <key>` | API key to save. Pass `""` to clear the saved key. |
+| `--no-save-key` | With `--api-key`, don't persist the key to `config.json` (use `FAL_KEY` at runtime instead). |
+| `--output-format <auto\|json\|standard>` | Default output mode. |
+| `--auto-load-env` / `--no-auto-load-env` | Toggle auto-loading `FAL_KEY` from a project `.env`. |
+| `--auto-update` / `--no-auto-update` | Toggle background update checks. |
+
 ## Commands
 
 ### `models` — Search and inspect models
