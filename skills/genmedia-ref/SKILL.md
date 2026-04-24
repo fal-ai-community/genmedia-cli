@@ -86,6 +86,63 @@ genmedia pricing <endpoint_id> [--json]
 genmedia docs <query> [--json]
 ```
 
+## Error output
+
+Every command exits non-zero on failure and writes a JSON error object to
+stderr. The shape is stable across commands:
+
+```json
+{
+  "error": "<human-readable summary>",
+  "details": {
+    "endpoint_id": "fal-ai/flux/schnell",
+    "request_id": "019d...",
+    "status": 422,
+    "error_type": "ValidationError" | "ApiError" | "Error",
+    "validation_errors": [
+      {
+        "field": "num_images",
+        "message": "Input should be less than or equal to 4",
+        "type": "less_than_equal",
+        "input": 20
+      }
+    ],
+    "body": { "detail": [ ... raw server payload ... ] },
+    "logs": [ { "level": "ERROR", "message": "...", "timestamp": "..." } ]
+  }
+}
+```
+
+Field meanings:
+
+- `error` — one-line summary you can show the user.
+- `details.status` — HTTP status from fal.ai (`422` input validation, `401`
+  unauthenticated, `403` forbidden, `404` endpoint not found, `429` rate
+  limited, `5xx` upstream). Missing for local errors (network, parsing).
+- `details.error_type` — `ValidationError` for 422 with FastAPI-style
+  `detail[]`; `ApiError` for other HTTP failures; `Error` for local errors.
+- `details.validation_errors` — present only when the server returned a
+  FastAPI validation payload. Each entry is `{ field, message, type, input }`
+  and uniquely identifies what the agent needs to fix. Dotted field paths
+  like `options.seed` or `images[0].url` point at nested inputs.
+- `details.body` — the raw response body, preserved for agents that need
+  the full FastAPI `ctx`/`expected` fields or vendor-specific payloads.
+- `details.logs` — recent model-side log lines when the failure happened
+  during inference (not for pre-flight validation errors).
+- `details.request_id` — included when the request reached fal.ai; pass it
+  to `genmedia status <endpoint_id> <request_id> --logs --json` for full
+  history.
+
+Agent guidance:
+
+- For `status: 422`, read `validation_errors`, correct the offending args,
+  and retry. Re-run `genmedia schema <endpoint_id> --json` if you need
+  allowed enum values or numeric bounds.
+- For `401`/`403`, check credentials — do not retry.
+- For `404`, verify the `endpoint_id` with `genmedia models ... --json`.
+- For `429` or `5xx`, a short backoff-and-retry is acceptable; everything
+  else should be surfaced to the user.
+
 ## Common workflows
 
 ### Synchronous inference (fast models)

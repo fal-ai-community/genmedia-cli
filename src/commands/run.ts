@@ -1,14 +1,13 @@
 import { fal } from "@fal-ai/client";
 import { defineCommand } from "citty";
 import { configureSDK } from "../lib/api";
+import { formatApiError } from "../lib/error-format";
 import { error, isPrettyOutput, output } from "../lib/output";
 import { parseValue } from "../lib/parse-value";
 import {
   type CliLogEntry,
   collectUniqueLogs,
   describeQueueStatus,
-  getErrorDetails,
-  getErrorMessage,
 } from "../lib/request-logs";
 import { colors, createSpinner } from "../lib/ui";
 
@@ -124,13 +123,21 @@ export default defineCommand({
       );
     } catch (runError) {
       spinner?.fail(requestId ? `Run failed (${requestId})` : "Run failed");
+      const formatted = formatApiError(runError, "Run failed");
       error(
-        getErrorMessage(runError, "Run failed"),
+        formatted.message,
         {
           endpoint_id: endpointId,
           ...(requestId ? { request_id: requestId } : {}),
+          ...(formatted.status !== undefined
+            ? { status: formatted.status }
+            : {}),
+          error_type: formatted.name,
+          ...(formatted.validation_errors
+            ? { validation_errors: formatted.validation_errors }
+            : {}),
           ...(logs.length > 0 ? { logs: logs.slice(-10) } : {}),
-          ...(runError ? { details: getErrorDetails(runError) } : {}),
+          ...(formatted.body !== undefined ? { body: formatted.body } : {}),
         },
         { view: "run", showLogs: true },
       );

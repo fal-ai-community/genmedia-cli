@@ -46,8 +46,39 @@ skill for the full command reference.
      ```
 
 5. **Return** the result to the user. If the result contains URLs (images,
-   video, audio), present them clearly. If something failed, check the
-   `logs` field in the response for model-side errors.
+   video, audio), present them clearly.
+
+## Handling errors
+
+When a command exits non-zero, it prints a JSON error object to stderr:
+
+```json
+{
+  "error": "Validation error — num_images: Input should be less than or equal to 4",
+  "details": {
+    "endpoint_id": "fal-ai/flux/schnell",
+    "request_id": "019d...",
+    "status": 422,
+    "error_type": "ValidationError",
+    "validation_errors": [
+      { "field": "num_images", "message": "Input should be less than or equal to 4", "type": "less_than_equal", "input": 20 }
+    ],
+    "body": { "detail": [ ... raw FastAPI payload ... ] }
+  }
+}
+```
+
+- `status: 422` / `error_type: "ValidationError"` means the inputs violated
+  the model schema. Read `details.validation_errors` — each entry names the
+  `field`, a human `message`, the validator `type`, and the `input` that was
+  rejected. Re-run `genmedia schema <endpoint_id> --json` if you need the
+  allowed values, fix the offending args, and retry.
+- Other statuses (401 auth, 403 forbidden, 404 endpoint not found, 429 rate
+  limited, 5xx upstream) surface the server message directly in `error` and
+  do not contain `validation_errors`. Do not retry 4xx errors blindly —
+  correct the request first.
+- For in-flight model failures, `details.logs` contains the most recent
+  model-side log lines.
 
 ## Notes
 

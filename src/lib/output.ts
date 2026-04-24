@@ -4,10 +4,11 @@ import { colors, symbols } from "./ui";
 
 type OutputMode = "json" | "pretty";
 
-export type OutputView = "default" | "run" | "status";
+export type OutputView = "default" | "run" | "status" | "error";
 
 export interface OutputOptions {
   showLogs?: boolean;
+  showBody?: boolean;
   view?: OutputView;
 }
 
@@ -205,11 +206,83 @@ function printJobView(
   }
 }
 
+function printValidationErrors(
+  issues: unknown[],
+  writeLine: (line?: string) => void,
+): void {
+  writeLine(colors.bold("Validation errors"));
+  for (const item of issues) {
+    if (!isRecord(item)) {
+      writeLine(`  ${colors.red(symbols.bullet)} ${formatScalar(item)}`);
+      continue;
+    }
+    const field =
+      typeof item.field === "string" && item.field.length > 0
+        ? item.field
+        : "body";
+    const message =
+      typeof item.message === "string" ? item.message : JSON.stringify(item);
+    const type =
+      typeof item.type === "string" && item.type.length > 0
+        ? ` ${colors.dim(`(${item.type})`)}`
+        : "";
+    writeLine(
+      `  ${colors.red(symbols.bullet)} ${colors.bold(field)}: ${message}${type}`,
+    );
+    if ("input" in item && item.input !== undefined) {
+      writeLine(`      ${colors.dim("received:")} ${formatScalar(item.input)}`);
+    }
+  }
+}
+
+function printErrorDetails(
+  data: Record<string, unknown>,
+  options: OutputOptions,
+  writeLine: (line?: string) => void,
+): void {
+  const { validation_errors, body, logs, ...rest } = data;
+
+  const summary = Object.fromEntries(
+    Object.entries(rest).filter(([, value]) => value !== undefined),
+  );
+  if (Object.keys(summary).length > 0) {
+    printPrettyValue(summary, writeLine);
+  }
+
+  if (Array.isArray(validation_errors) && validation_errors.length > 0) {
+    if (Object.keys(summary).length > 0) writeLine();
+    printValidationErrors(validation_errors, writeLine);
+  }
+
+  if (Array.isArray(logs) && logs.length > 0) {
+    writeLine();
+    writeLine(colors.bold("Logs"));
+    if (options.showLogs) {
+      printLogs(logs, writeLine, 1);
+    } else {
+      writeLine(
+        `  ${colors.dim(`${logs.length} log entries hidden. Re-run with --logs to show them.`)}`,
+      );
+    }
+  }
+
+  if (body !== undefined && options.showBody) {
+    writeLine();
+    writeLine(colors.bold("Response body"));
+    printPrettyValue(body, writeLine, 1);
+  }
+}
+
 function printPretty(
   data: unknown,
   options: OutputOptions,
   writeLine: (line?: string) => void,
 ): void {
+  if (options.view === "error" && isRecord(data)) {
+    printErrorDetails(data, options, writeLine);
+    return;
+  }
+
   if ((options.view === "run" || options.view === "status") && isRecord(data)) {
     printJobView(data, options, writeLine);
     return;
@@ -248,7 +321,11 @@ export function error(
     writeStderr(`${colors.red(symbols.error)} ${colors.red(message)}`);
     if (details !== undefined) {
       writeStderr();
-      printPretty(details, { ...options, showLogs: true }, writeStderr);
+      printPretty(
+        details,
+        { ...options, view: "error", showLogs: true },
+        writeStderr,
+      );
     }
   }
 
