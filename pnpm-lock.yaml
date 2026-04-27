@@ -1,0 +1,350 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@fal-ai/client':
+        specifier: ^1.10.0
+        version: 1.10.0
+      chalk:
+        specifier: ^5.6.2
+        version: 5.6.2
+      citty:
+        specifier: ^0.2.2
+        version: 0.2.2
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      ora:
+        specifier: ^9.4.0
+        version: 9.4.0
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.4.7
+        version: 2.4.7
+      bun-types:
+        specifier: ^1.3.10
+        version: 1.3.10
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+packages:
+
+  '@biomejs/biome@2.4.7':
+    resolution: {integrity: sha512-vXrgcmNGZ4lpdwZSpMf1hWw1aWS6B+SyeSYKTLrNsiUsAdSRN0J4d/7mF3ogJFbIwFFSOL3wT92Zzxia/d5/ng==, tarball: https://registry.npmjs.org/@biomejs/biome/-/biome-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    hasBin: true
+
+  '@biomejs/cli-darwin-arm64@2.4.7':
+    resolution: {integrity: sha512-Oo0cF5mHzmvDmTXw8XSjhCia8K6YrZnk7aCS54+/HxyMdZMruMO3nfpDsrlar/EQWe41r1qrwKiCa2QDYHDzWA==, tarball: https://registry.npmjs.org/@biomejs/cli-darwin-arm64/-/cli-darwin-arm64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@biomejs/cli-darwin-x64@2.4.7':
+    resolution: {integrity: sha512-I+cOG3sd/7HdFtvDSnF9QQPrWguUH7zrkIMMykM3PtfWU9soTcS2yRb9Myq6MHmzbeCT08D1UmY+BaiMl5CcoQ==, tarball: https://registry.npmjs.org/@biomejs/cli-darwin-x64/-/cli-darwin-x64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@biomejs/cli-linux-arm64-musl@2.4.7':
+    resolution: {integrity: sha512-I2NvM9KPb09jWml93O2/5WMfNR7Lee5Latag1JThDRMURVhPX74p9UDnyTw3Ae6cE1DgXfw7sqQgX7rkvpc0vw==, tarball: https://registry.npmjs.org/@biomejs/cli-linux-arm64-musl/-/cli-linux-arm64-musl-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@biomejs/cli-linux-arm64@2.4.7':
+    resolution: {integrity: sha512-om6FugwmibzfP/6ALj5WRDVSND4H2G9X0nkI1HZpp2ySf9lW2j0X68oQSaHEnls6666oy4KDsc5RFjT4m0kV0w==, tarball: https://registry.npmjs.org/@biomejs/cli-linux-arm64/-/cli-linux-arm64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@biomejs/cli-linux-x64-musl@2.4.7':
+    resolution: {integrity: sha512-00kx4YrBMU8374zd2wHuRV5wseh0rom5HqRND+vDldJPrWwQw+mzd/d8byI9hPx926CG+vWzq6AeiT7Yi5y59g==, tarball: https://registry.npmjs.org/@biomejs/cli-linux-x64-musl/-/cli-linux-x64-musl-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [x64]
+    os: [linux]
+
+  '@biomejs/cli-linux-x64@2.4.7':
+    resolution: {integrity: sha512-bV8/uo2Tj+gumnk4sUdkerWyCPRabaZdv88IpbmDWARQQoA/Q0YaqPz1a+LSEDIL7OfrnPi9Hq1Llz4ZIGyIQQ==, tarball: https://registry.npmjs.org/@biomejs/cli-linux-x64/-/cli-linux-x64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [x64]
+    os: [linux]
+
+  '@biomejs/cli-win32-arm64@2.4.7':
+    resolution: {integrity: sha512-hOUHBMlFCvDhu3WCq6vaBoG0dp0LkWxSEnEEsxxXvOa9TfT6ZBnbh72A/xBM7CBYB7WgwqboetzFEVDnMxelyw==, tarball: https://registry.npmjs.org/@biomejs/cli-win32-arm64/-/cli-win32-arm64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@biomejs/cli-win32-x64@2.4.7':
+    resolution: {integrity: sha512-qEpGjSkPC3qX4ycbMUthXvi9CkRq7kZpkqMY1OyhmYlYLnANnooDQ7hDerM8+0NJ+DZKVnsIc07h30XOpt7LtQ==, tarball: https://registry.npmjs.org/@biomejs/cli-win32-x64/-/cli-win32-x64-2.4.7.tgz}
+    engines: {node: '>=14.21.3'}
+    cpu: [x64]
+    os: [win32]
+
+  '@fal-ai/client@1.10.0':
+    resolution: {integrity: sha512-sQWnBc6cdIzK8nFybrVKal0rLeJS2vqrrNxx4Hcc0SorndkfkMXL3TIAiIfiF/AlZuVoRpazpNg6n8K81WHzOQ==, tarball: https://registry.npmjs.org/@fal-ai/client/-/client-1.10.0.tgz}
+    engines: {node: '>=18.0.0'}
+
+  '@msgpack/msgpack@3.1.3':
+    resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==, tarball: https://registry.npmjs.org/@msgpack/msgpack/-/msgpack-3.1.3.tgz}
+    engines: {node: '>= 18'}
+
+  '@types/node@25.5.0':
+    resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==, tarball: https://registry.npmjs.org/@types/node/-/node-25.5.0.tgz}
+
+  ansi-regex@6.2.2:
+    resolution: {integrity: sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg==, tarball: https://registry.npmjs.org/ansi-regex/-/ansi-regex-6.2.2.tgz}
+    engines: {node: '>=12'}
+
+  bun-types@1.3.10:
+    resolution: {integrity: sha512-tcpfCCl6XWo6nCVnpcVrxQ+9AYN1iqMIzgrSKYMB/fjLtV2eyAVEg7AxQJuCq/26R6HpKWykQXuSOq/21RYcbg==, tarball: https://registry.npmjs.org/bun-types/-/bun-types-1.3.10.tgz}
+
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==, tarball: https://registry.npmjs.org/chalk/-/chalk-5.6.2.tgz}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+
+  citty@0.2.2:
+    resolution: {integrity: sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w==, tarball: https://registry.npmjs.org/citty/-/citty-0.2.2.tgz}
+
+  cli-cursor@5.0.0:
+    resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==, tarball: https://registry.npmjs.org/cli-cursor/-/cli-cursor-5.0.0.tgz}
+    engines: {node: '>=18'}
+
+  cli-spinners@3.4.0:
+    resolution: {integrity: sha512-bXfOC4QcT1tKXGorxL3wbJm6XJPDqEnij2gQ2m7ESQuE+/z9YFIWnl/5RpTiKWbMq3EVKR4fRLJGn6DVfu0mpw==, tarball: https://registry.npmjs.org/cli-spinners/-/cli-spinners-3.4.0.tgz}
+    engines: {node: '>=18.20'}
+
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==, tarball: https://registry.npmjs.org/dotenv/-/dotenv-17.4.2.tgz}
+    engines: {node: '>=12'}
+
+  eventsource-parser@1.1.2:
+    resolution: {integrity: sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA==, tarball: https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-1.1.2.tgz}
+    engines: {node: '>=14.18'}
+
+  get-east-asian-width@1.5.0:
+    resolution: {integrity: sha512-CQ+bEO+Tva/qlmw24dCejulK5pMzVnUOFOijVogd3KQs07HnRIgp8TGipvCCRT06xeYEbpbgwaCxglFyiuIcmA==, tarball: https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.5.0.tgz}
+    engines: {node: '>=18'}
+
+  husky@9.1.7:
+    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==, tarball: https://registry.npmjs.org/husky/-/husky-9.1.7.tgz}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  is-interactive@2.0.0:
+    resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==, tarball: https://registry.npmjs.org/is-interactive/-/is-interactive-2.0.0.tgz}
+    engines: {node: '>=12'}
+
+  is-unicode-supported@2.1.0:
+    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==, tarball: https://registry.npmjs.org/is-unicode-supported/-/is-unicode-supported-2.1.0.tgz}
+    engines: {node: '>=18'}
+
+  kleur@3.0.3:
+    resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==, tarball: https://registry.npmjs.org/kleur/-/kleur-3.0.3.tgz}
+    engines: {node: '>=6'}
+
+  log-symbols@7.0.1:
+    resolution: {integrity: sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg==, tarball: https://registry.npmjs.org/log-symbols/-/log-symbols-7.0.1.tgz}
+    engines: {node: '>=18'}
+
+  mimic-function@5.0.1:
+    resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==, tarball: https://registry.npmjs.org/mimic-function/-/mimic-function-5.0.1.tgz}
+    engines: {node: '>=18'}
+
+  onetime@7.0.0:
+    resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==, tarball: https://registry.npmjs.org/onetime/-/onetime-7.0.0.tgz}
+    engines: {node: '>=18'}
+
+  ora@9.4.0:
+    resolution: {integrity: sha512-84cglkRILFxdtA8hAvLNdMrtBpPNBTrQ9/ulg0FA7xLMnD6mifv+enAIeRmvtv+WgdCE+LPGOfQmtJRrVaIVhQ==, tarball: https://registry.npmjs.org/ora/-/ora-9.4.0.tgz}
+    engines: {node: '>=20'}
+
+  prompts@2.4.2:
+    resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==, tarball: https://registry.npmjs.org/prompts/-/prompts-2.4.2.tgz}
+    engines: {node: '>= 6'}
+
+  restore-cursor@5.1.0:
+    resolution: {integrity: sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA==, tarball: https://registry.npmjs.org/restore-cursor/-/restore-cursor-5.1.0.tgz}
+    engines: {node: '>=18'}
+
+  robot3@0.4.1:
+    resolution: {integrity: sha512-hzjy826lrxzx8eRgv80idkf8ua1JAepRc9Efdtj03N3KNJuznQCPlyCJ7gnUmDFwZCLQjxy567mQVKmdv2BsXQ==, tarball: https://registry.npmjs.org/robot3/-/robot3-0.4.1.tgz}
+
+  signal-exit@4.1.0:
+    resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==, tarball: https://registry.npmjs.org/signal-exit/-/signal-exit-4.1.0.tgz}
+    engines: {node: '>=14'}
+
+  sisteransi@1.0.5:
+    resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==, tarball: https://registry.npmjs.org/sisteransi/-/sisteransi-1.0.5.tgz}
+
+  stdin-discarder@0.3.2:
+    resolution: {integrity: sha512-eCPu1qRxPVkl5605OTWF8Wz40b4Mf45NY5LQmVPQ599knfs5QhASUm9GbJ5BDMDOXgrnh0wyEdvzmL//YMlw0A==, tarball: https://registry.npmjs.org/stdin-discarder/-/stdin-discarder-0.3.2.tgz}
+    engines: {node: '>=18'}
+
+  string-width@8.2.0:
+    resolution: {integrity: sha512-6hJPQ8N0V0P3SNmP6h2J99RLuzrWz2gvT7VnK5tKvrNqJoyS9W4/Fb8mo31UiPvy00z7DQXkP2hnKBVav76thw==, tarball: https://registry.npmjs.org/string-width/-/string-width-8.2.0.tgz}
+    engines: {node: '>=20'}
+
+  strip-ansi@7.2.0:
+    resolution: {integrity: sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==, tarball: https://registry.npmjs.org/strip-ansi/-/strip-ansi-7.2.0.tgz}
+    engines: {node: '>=12'}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==, tarball: https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==, tarball: https://registry.npmjs.org/undici-types/-/undici-types-7.18.2.tgz}
+
+  yoctocolors@2.1.2:
+    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==, tarball: https://registry.npmjs.org/yoctocolors/-/yoctocolors-2.1.2.tgz}
+    engines: {node: '>=18'}
+
+snapshots:
+
+  '@biomejs/biome@2.4.7':
+    optionalDependencies:
+      '@biomejs/cli-darwin-arm64': 2.4.7
+      '@biomejs/cli-darwin-x64': 2.4.7
+      '@biomejs/cli-linux-arm64': 2.4.7
+      '@biomejs/cli-linux-arm64-musl': 2.4.7
+      '@biomejs/cli-linux-x64': 2.4.7
+      '@biomejs/cli-linux-x64-musl': 2.4.7
+      '@biomejs/cli-win32-arm64': 2.4.7
+      '@biomejs/cli-win32-x64': 2.4.7
+
+  '@biomejs/cli-darwin-arm64@2.4.7':
+    optional: true
+
+  '@biomejs/cli-darwin-x64@2.4.7':
+    optional: true
+
+  '@biomejs/cli-linux-arm64-musl@2.4.7':
+    optional: true
+
+  '@biomejs/cli-linux-arm64@2.4.7':
+    optional: true
+
+  '@biomejs/cli-linux-x64-musl@2.4.7':
+    optional: true
+
+  '@biomejs/cli-linux-x64@2.4.7':
+    optional: true
+
+  '@biomejs/cli-win32-arm64@2.4.7':
+    optional: true
+
+  '@biomejs/cli-win32-x64@2.4.7':
+    optional: true
+
+  '@fal-ai/client@1.10.0':
+    dependencies:
+      '@msgpack/msgpack': 3.1.3
+      eventsource-parser: 1.1.2
+      robot3: 0.4.1
+
+  '@msgpack/msgpack@3.1.3': {}
+
+  '@types/node@25.5.0':
+    dependencies:
+      undici-types: 7.18.2
+
+  ansi-regex@6.2.2: {}
+
+  bun-types@1.3.10:
+    dependencies:
+      '@types/node': 25.5.0
+
+  chalk@5.6.2: {}
+
+  citty@0.2.2: {}
+
+  cli-cursor@5.0.0:
+    dependencies:
+      restore-cursor: 5.1.0
+
+  cli-spinners@3.4.0: {}
+
+  dotenv@17.4.2: {}
+
+  eventsource-parser@1.1.2: {}
+
+  get-east-asian-width@1.5.0: {}
+
+  husky@9.1.7: {}
+
+  is-interactive@2.0.0: {}
+
+  is-unicode-supported@2.1.0: {}
+
+  kleur@3.0.3: {}
+
+  log-symbols@7.0.1:
+    dependencies:
+      is-unicode-supported: 2.1.0
+      yoctocolors: 2.1.2
+
+  mimic-function@5.0.1: {}
+
+  onetime@7.0.0:
+    dependencies:
+      mimic-function: 5.0.1
+
+  ora@9.4.0:
+    dependencies:
+      chalk: 5.6.2
+      cli-cursor: 5.0.0
+      cli-spinners: 3.4.0
+      is-interactive: 2.0.0
+      is-unicode-supported: 2.1.0
+      log-symbols: 7.0.1
+      stdin-discarder: 0.3.2
+      string-width: 8.2.0
+
+  prompts@2.4.2:
+    dependencies:
+      kleur: 3.0.3
+      sisteransi: 1.0.5
+
+  restore-cursor@5.1.0:
+    dependencies:
+      onetime: 7.0.0
+      signal-exit: 4.1.0
+
+  robot3@0.4.1: {}
+
+  signal-exit@4.1.0: {}
+
+  sisteransi@1.0.5: {}
+
+  stdin-discarder@0.3.2: {}
+
+  string-width@8.2.0:
+    dependencies:
+      get-east-asian-width: 1.5.0
+      strip-ansi: 7.2.0
+
+  strip-ansi@7.2.0:
+    dependencies:
+      ansi-regex: 6.2.2
+
+  typescript@5.9.3: {}
+
+  undici-types@7.18.2: {}
+
+  yoctocolors@2.1.2: {}

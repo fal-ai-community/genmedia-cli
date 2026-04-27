@@ -22,25 +22,30 @@ permissions:
 jobs:
   build:
     name: Build ${{ matrix.platform }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - target: bun-linux-x64
             artifact: genmedia
             platform: linux-x64
+            os: ubuntu-latest
           - target: bun-linux-arm64
             artifact: genmedia
             platform: linux-arm64
+            os: ubuntu-24.04-arm
           - target: bun-darwin-x64
             artifact: genmedia
             platform: darwin-x64
+            os: macos-13
           - target: bun-darwin-arm64
             artifact: genmedia
             platform: darwin-arm64
+            os: macos-latest
           - target: bun-windows-x64
             artifact: genmedia.exe
             platform: windows-x64
+            os: windows-latest
 
     steps:
       - uses: actions/checkout@v6
@@ -54,6 +59,7 @@ jobs:
 
       - name: Extract version info
         id: version
+        shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
@@ -63,6 +69,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Verify package version
+        shell: bash
         run: |
           PACKAGE_VERSION=$(bun -e "console.log(require('./package.json').version)")
           if [ "$PACKAGE_VERSION" != "${{ steps.version.outputs.version }}" ]; then
@@ -71,6 +78,7 @@ jobs:
           fi
 
       - name: Build binary
+        shell: bash
         run: |
           bun run scripts/gen-version.ts
           bun build --compile --minify --bytecode \
