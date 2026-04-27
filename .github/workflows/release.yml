@@ -37,7 +37,7 @@ jobs:
           - target: bun-darwin-x64
             artifact: genmedia
             platform: darwin-x64
-            os: macos-13
+            os: macos-15-intel
           - target: bun-darwin-arm64
             artifact: genmedia
             platform: darwin-arm64
