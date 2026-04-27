@@ -2,6 +2,84 @@
   "version": 1,
   "skills": [
     {
+      "name": "character-design",
+      "description": "Build consistent character designs and character media with genmedia. Use this for original characters, reference sheets, expression sheets, outfit variations, identity-preserving edits, and character-to-video workflows.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "1f62641d84b3dc0f2c0e13663afbb71cd9682483e82b920cc53450713c5f5d57",
+          "bytes": 5147
+        },
+        {
+          "path": "references/anchor-system.md",
+          "sha256": "397f23ee81160990aad789931649aded955314c583539665fb89f1bf15831acd",
+          "bytes": 1898
+        },
+        {
+          "path": "references/examples.md",
+          "sha256": "1980d83b82d2ee18417aa3d704a30c4ad17b17e93a3676ed0be1508e64dd849f",
+          "bytes": 2028
+        },
+        {
+          "path": "references/prompt-patterns.md",
+          "sha256": "256ba5364c0b9b52538774e1c307ec1e8dbeffcd5cd85950e2b3551bcac382bc",
+          "bytes": 1880
+        }
+      ]
+    },
+    {
+      "name": "cinematography",
+      "description": "Design cinematic image and video prompts for genmedia. Use this for shot language, camera movement, lighting, lens choices, color grade, film texture, scene blocking, and production-ready visual direction.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "8d23b4836a7621e1c9715def480d95e3b4b2135bfd7995e2800013949fc8eba7",
+          "bytes": 4925
+        },
+        {
+          "path": "references/examples.md",
+          "sha256": "e143734e15f79411240056f22b9def4d8053b11cb54958213e68eec9899778c8",
+          "bytes": 1674
+        },
+        {
+          "path": "references/lighting-lens-color.md",
+          "sha256": "e9bbe4c61c98c0cf98cb652101b0e16f670184d7236e5509e9abc2e8de195f2a",
+          "bytes": 1995
+        },
+        {
+          "path": "references/shot-language.md",
+          "sha256": "21ca47d38ae6388293c410c4181fd2d84f8058fbcd36bf3db5d1643179e3faaf",
+          "bytes": 1901
+        }
+      ]
+    },
+    {
+      "name": "commercial",
+      "description": "Plan and run commercial image or video production with genmedia. Use this for product photography, ads, e-commerce batches, product reveals, lifestyle commercials, background replacement, social formats, and brand-safe prompt work.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "be01bc3eabf0cd1004b9ce6a1bf9725aa0bb308a3c499483971ce423e392e3b6",
+          "bytes": 6104
+        },
+        {
+          "path": "references/examples.md",
+          "sha256": "529a12813026c6f77c5171b99cfb966b57c81b36594626e8dd7a5eed81c7ba15",
+          "bytes": 1818
+        },
+        {
+          "path": "references/prompt-patterns.md",
+          "sha256": "491aaf66cac663b453d395b0a3c690f3da1a11a93292361b6589a6d6fec26be4",
+          "bytes": 2620
+        },
+        {
+          "path": "references/workflows.md",
+          "sha256": "e1cd239afb8a1b8f3bf5e7ae46d063b15a2cc73e0b9a28373b1d0acb344f135f",
+          "bytes": 2111
+        }
+      ]
+    },
+    {
       "name": "genmedia",
       "description": "Run a fal.ai model end-to-end with the genmedia CLI. Use this when the user asks to generate an image, video, or audio; convert media; upscale or restyle; run any fal.ai model; or \"use genmedia\" for a task. Guides discovery, schema inspection, input preparation, execution, and result handling.",
       "files": [
@@ -20,6 +98,74 @@
           "path": "SKILL.md",
           "sha256": "dbc36f1091a266fa2cb4526c088d1a457523e7ed6ff0eef415c17371dd9d78b3",
           "bytes": 8957
+        }
+      ]
+    },
+    {
+      "name": "model-routing",
+      "description": "Choose default fal.ai endpoint IDs for genmedia production skills. Use this with commercial, character-design, cinematography, storytelling, and workflow when the user has not named a specific model.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "aaa36cb33dde91821127d44c238fa92256df4048b420834b064c64a277612fbd",
+          "bytes": 4704
+        }
+      ]
+    },
+    {
+      "name": "storytelling",
+      "description": "Build multi-shot narrative image, video, and audio workflows with genmedia. Use this for storyboards, shot lists, multi-prompt video, first-frame to last-frame pipelines, social stories, brand films, and sequence continuity.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "84db6699346718074e2c3c9e6ac1f9cd650e97f588023d9050ba8cf04d11b0f6",
+          "bytes": 5658
+        },
+        {
+          "path": "references/examples.md",
+          "sha256": "1b882303a6e7546896c4045a0b57f70cb2cd60afb8217ff8266865215ef0e507",
+          "bytes": 2802
+        },
+        {
+          "path": "references/shot-planning.md",
+          "sha256": "8ceccbda8fdeab87f1c4c5f1303562d3d37eca8f461e219e3650e22eb280ba4c",
+          "bytes": 1883
+        },
+        {
+          "path": "references/workflows.md",
+          "sha256": "618762ee0c9304f1a1065dc8f10de6bcd41242a59334b2a6f8e77badfa51afee",
+          "bytes": 2094
+        }
+      ]
+    },
+    {
+      "name": "workflow",
+      "description": "Design and execute multi-step media workflows with genmedia. Use this for pipelines that combine planning, generation, editing, image or video utilities, audio, subtitles, batching, and final delivery manifests.",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "a4187490f953eb54f130a29f1a4f08b48a65f013337f2be85451705eb3ba2cba",
+          "bytes": 5183
+        },
+        {
+          "path": "references/node-rules.md",
+          "sha256": "cf449fe1aa4bf0338ae1cc0a226fcb675eebf9597017e04eb4f52083a3b57fef",
+          "bytes": 2826
+        },
+        {
+          "path": "references/pipeline-patterns.md",
+          "sha256": "dcfe4b87b0a3b02883ff98c3437f91145d933e5b669caccab736c1f9e6c40988",
+          "bytes": 3623
+        },
+        {
+          "path": "references/recipes.md",
+          "sha256": "c5b332b61fc557595ce2e9e992ec9e9944936008db9ac064b9872d12696a4a7e",
+          "bytes": 3036
+        },
+        {
+          "path": "references/utility-endpoints.md",
+          "sha256": "c1921d500107659236c401451ecc1e9655576b5b35fb5e7bb1f8a308f0287501",
+          "bytes": 3401
         }
       ]
     }
