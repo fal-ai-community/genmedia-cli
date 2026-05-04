@@ -9,7 +9,8 @@ import {
 import { dirname, join, relative, resolve } from "node:path";
 
 const DEFAULT_REGISTRY_URL =
-  "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills";
+  "https://raw.githubusercontent.com/fal-ai-community/skills/refs/heads/main/skills";
+const DEFAULT_SKILLS_API_URL = "https://genmedia.sh/skills";
 
 export const AGENT_ROOTS = [".agents", ".claude"] as const;
 const SKILLS_SUBDIR = "skills";
@@ -32,6 +33,18 @@ export interface SkillsIndex {
   skills: SkillEntry[];
 }
 
+export interface SkillSearchHit extends SkillEntry {
+  score: number;
+}
+
+export interface SkillSearchResponse {
+  registry: string;
+  query: string;
+  count: number;
+  total: number;
+  skills: SkillSearchHit[];
+}
+
 export interface InstalledSkill {
   name: string;
   description: string;
@@ -51,6 +64,12 @@ export function getRegistryUrl(): string {
     /\/+$/,
     "",
   );
+}
+
+export function getSkillsApiUrl(): string {
+  return (
+    process.env.GENMEDIA_SKILLS_API_URL ?? DEFAULT_SKILLS_API_URL
+  ).replace(/\/+$/, "");
 }
 
 export function resolveSkillsBase(cwd: string): string | null {
@@ -87,6 +106,18 @@ export async function fetchSkillFile(
   file: string,
 ): Promise<string> {
   return fetchText(`${getRegistryUrl()}/${skill}/${file}`);
+}
+
+export async function searchSkillsApi(
+  query: string,
+): Promise<SkillSearchResponse> {
+  const url = `${getSkillsApiUrl()}?q=${encodeURIComponent(query)}`;
+  const body = await fetchText(url);
+  try {
+    return JSON.parse(body) as SkillSearchResponse;
+  } catch {
+    throw new Error(`Invalid search response from ${url}`);
+  }
 }
 
 export function sha256(body: string): string {

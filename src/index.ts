@@ -165,14 +165,16 @@ function startCli(): void {
             "Install, update, and list agent skills from the genmedia registry (installs under .agents/skills/, symlinked into .claude/skills/)",
           usage: "genmedia skills <list|install|update|remove> [args]",
           subcommands: {
-            list: "List skills available in the registry",
+            list: "genmedia skills list [<query>] — full-text search by name/description",
             install: "genmedia skills install <name> [--force]",
             update: "genmedia skills update [<name>]",
             remove: "genmedia skills remove <name>",
           },
           env: {
             GENMEDIA_SKILLS_URL:
-              "Override the registry base URL (default: https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills)",
+              "Override the registry base URL (default: https://raw.githubusercontent.com/fal-ai-community/skills/refs/heads/main/skills)",
+            GENMEDIA_SKILLS_API_URL:
+              "Override the skills search API URL used by `skills list <query>` (default: https://genmedia.sh/skills)",
             GENMEDIA_AGENT_LINKS:
               "Comma-separated list of agent skill dirs to symlink into (default: .claude/skills)",
           },

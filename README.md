@@ -197,13 +197,14 @@ After running `init`, compatible agent sessions in that project can use the inst
 ### `skills` — Manage installed agent skills
 
 ```bash
-genmedia skills list
+genmedia skills list                  # list everything in the registry
+genmedia skills list image            # full-text search name + description
 genmedia skills install genmedia
 genmedia skills update
 genmedia skills remove genmedia
 ```
 
-Installs, updates, lists, and removes agent skills from the genmedia registry.
+Installs, updates, lists, and removes agent skills from the genmedia registry. `skills list <query>` runs full-text search via the hosted index API (`GENMEDIA_SKILLS_API_URL`, default `https://genmedia.sh/skills`); the no-query form fetches `index.json` directly from the registry.
 
 ## Agent-first design
 

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": [
+    {
+      "name": "genmedia",
+      "description": "Run a fal.ai model end-to-end with the genmedia CLI. Use this when the user asks to generate an image, video, or audio; convert media; upscale or restyle; run any fal.ai model; or \"use genmedia\" for a task. Guides discovery, schema inspection, input preparation, execution, and result handling.",
+      "files": ["SKILL.md"],
+      "sha256": {
+        "SKILL.md": "7b1107bc3c07a693eed1f12f46c72ab0bbb2b6cd71b6fbca08002f12acc145da"
+      },
+      "installedAt": "2026-05-01T16:24:17.287Z",
+      "source": "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills/genmedia"
+    },
+    {
+      "name": "genmedia-ref",
+      "description": "Complete genmedia CLI reference for fal.ai — consult this whenever the user asks you to search for models, run inference, upload files, check pricing, or manage async jobs on fal.ai. Use --json on every command to get structured output you can parse.",
+      "files": ["SKILL.md"],
+      "sha256": {
+        "SKILL.md": "dbc36f1091a266fa2cb4526c088d1a457523e7ed6ff0eef415c17371dd9d78b3"
+      },
+      "installedAt": "2026-05-01T16:24:17.595Z",
+      "source": "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills/genmedia-ref"
+    }
+  ]
+}
