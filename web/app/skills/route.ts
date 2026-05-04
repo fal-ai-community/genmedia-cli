@@ -1,5 +1,10 @@
 import type { NextRequest } from "next/server";
-import { fetchSkillsIndex, getRegistryUrl, searchSkills } from "@/lib/skills";
+import {
+  fetchSkillsIndex,
+  getRegistryUrl,
+  searchSkills,
+  SkillsIndex,
+} from "@/lib/skills";
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -7,7 +12,7 @@ export async function GET(request: NextRequest) {
   const limitParam = params.get("limit");
   const limit = limitParam ? Number.parseInt(limitParam, 10) : null;
 
-  let index;
+  let index: SkillsIndex;
   try {
     index = await fetchSkillsIndex();
   } catch (err) {

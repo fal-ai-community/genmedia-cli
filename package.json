@@ -1,6 +1,6 @@
 {
   "name": "@fal-ai/genmedia-cli",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Agent-first CLI for fal.ai — search, run, and manage 600+ generative AI models",
   "type": "module",
   "bin": {
