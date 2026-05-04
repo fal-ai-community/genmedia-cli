@@ -9,7 +9,7 @@ import {
 import { dirname, join, relative, resolve } from "node:path";
 
 const DEFAULT_REGISTRY_URL =
-  "https://raw.githubusercontent.com/fal-ai-community/skills/refs/heads/main/skills/claude.ai";
+  "https://raw.githubusercontent.com/fal-ai-community/skills/refs/heads/main/skills";
 
 export const AGENT_ROOTS = [".agents", ".claude"] as const;
 const SKILLS_SUBDIR = "skills";
