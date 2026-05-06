@@ -187,7 +187,6 @@ Installs the default genmedia skill bundle:
 
 | Skill | Purpose |
 |---|---|
-| `genmedia-ref` | Background reference for fal.ai work |
 | `genmedia` | Guided workflow for model discovery, schema inspection, and execution |
 
 The bundle is installed into `.agents/skills/` if the project has a `.agents/` directory, otherwise into `.claude/skills/`. If neither directory exists, the command exits with a message asking you to create one and try again.
