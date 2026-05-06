@@ -13,8 +13,6 @@
     "format": "biome format --write",
     "lint": "biome lint --write",
     "check": "biome check src",
-    "skills:index": "bun run scripts/build-skills-index.ts",
-    "skills:index:check": "bun run scripts/build-skills-index.ts --check",
     "prepare": "husky"
   },
   "keywords": [

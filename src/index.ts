@@ -187,7 +187,7 @@ function startCli(): void {
         },
         init: {
           description:
-            "Install the default genmedia skill bundle into the current project (alias for `skills install genmedia genmedia-ref`)",
+            "Install the default genmedia skill bundle into the current project (alias for `skills install genmedia`)",
           usage: "genmedia init [--force]",
           options: {
             "--force": "Reinstall skills even if already present",
