@@ -16,9 +16,23 @@ import { join } from "node:path";
 
 export type OutputFormat = "auto" | "json" | "standard";
 
-// In-memory representation — apiKey is always decrypted here
+export interface AuthSession {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  obtained_at: number;
+  user: {
+    id: string;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
+// In-memory representation — secrets are decrypted here
 export interface GenmediaConfig {
   apiKey?: string;
+  session?: AuthSession;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
   autoUpdate?: boolean;
@@ -26,9 +40,10 @@ export interface GenmediaConfig {
   latestKnownVersion?: string;
 }
 
-// On-disk representation — apiKey is stored encrypted, never plaintext
+// On-disk representation — secrets are stored encrypted, never plaintext
 interface StoredConfig {
   apiKey?: string;
+  session?: string;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
   autoUpdate?: boolean;
@@ -50,7 +65,7 @@ function deriveMachineKey(): Buffer {
   return createHash("sha256").update(identity).digest();
 }
 
-function encryptApiKey(plaintext: string): string {
+function encryptString(plaintext: string): string {
   const key = deriveMachineKey();
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -62,7 +77,7 @@ function encryptApiKey(plaintext: string): string {
   return [iv, tag, encrypted].map((b) => b.toString("base64")).join(":");
 }
 
-function decryptApiKey(ciphertext: string): string | null {
+function decryptString(ciphertext: string): string | null {
   try {
     const parts = ciphertext.split(":");
     if (parts.length !== 3) return null;
@@ -75,6 +90,16 @@ function decryptApiKey(ciphertext: string): string | null {
     );
   } catch {
     return null;
+  }
+}
+
+function decodeSession(blob: string): AuthSession | undefined {
+  const json = decryptString(blob);
+  if (!json) return undefined;
+  try {
+    return JSON.parse(json) as AuthSession;
+  } catch {
+    return undefined;
   }
 }
 
@@ -92,8 +117,9 @@ export function loadConfig(): GenmediaConfig {
         lastUpdateCheckAt: stored.lastUpdateCheckAt,
         latestKnownVersion: stored.latestKnownVersion,
         ...(stored.apiKey
-          ? { apiKey: decryptApiKey(stored.apiKey) ?? undefined }
+          ? { apiKey: decryptString(stored.apiKey) ?? undefined }
           : {}),
+        ...(stored.session ? { session: decodeSession(stored.session) } : {}),
       };
       return _cached;
     }
@@ -114,7 +140,10 @@ export function saveConfig(config: GenmediaConfig): void {
     autoUpdate: config.autoUpdate,
     lastUpdateCheckAt: config.lastUpdateCheckAt,
     latestKnownVersion: config.latestKnownVersion,
-    ...(config.apiKey ? { apiKey: encryptApiKey(config.apiKey) } : {}),
+    ...(config.apiKey ? { apiKey: encryptString(config.apiKey) } : {}),
+    ...(config.session
+      ? { session: encryptString(JSON.stringify(config.session)) }
+      : {}),
   };
   writeFileSync(CONFIG_FILE, JSON.stringify(stored, null, 2), "utf-8");
   // Restrict file to owner read/write only (no-op on Windows but harmless)
@@ -124,4 +153,8 @@ export function saveConfig(config: GenmediaConfig): void {
     // Windows — permissions work differently, not an error
   }
   _cached = config;
+}
+
+export function invalidateConfigCache(): void {
+  _cached = null;
 }

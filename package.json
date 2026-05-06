@@ -7,7 +7,7 @@
     "genmedia": "./dist/genmedia"
   },
   "scripts": {
-    "build": "bun run scripts/gen-version.ts && bun build --compile --minify --bytecode src/index.ts --outfile dist/genmedia",
+    "build": "bun run scripts/gen-version.ts && bun build --compile --minify --bytecode --define __PROD_BUILD__=true src/index.ts --outfile dist/genmedia",
     "dev": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",

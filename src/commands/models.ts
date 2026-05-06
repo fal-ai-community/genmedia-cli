@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { PLATFORM_BASE, platformHeaders } from "../lib/api";
+import { PLATFORM_BASE, platformFetch } from "../lib/api";
 import { error, output } from "../lib/output";
 
 const SUPPORTED_EXPANDS = new Set(["openapi-3.0", "enterprise_status"]);
@@ -175,7 +175,7 @@ export default defineCommand({
       url.searchParams.append("expand", value);
     }
 
-    const res = await fetch(url.toString(), { headers: platformHeaders() });
+    const res = await platformFetch(url.toString());
     if (!res.ok) error(`Failed (${res.status})`, await res.text());
 
     const data = (await res.json()) as ModelsResponse;
