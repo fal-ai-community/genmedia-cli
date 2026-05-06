@@ -10,16 +10,6 @@
       },
       "installedAt": "2026-05-01T16:24:17.287Z",
       "source": "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills/genmedia"
-    },
-    {
-      "name": "genmedia-ref",
-      "description": "Complete genmedia CLI reference for fal.ai — consult this whenever the user asks you to search for models, run inference, upload files, check pricing, or manage async jobs on fal.ai. Use --json on every command to get structured output you can parse.",
-      "files": ["SKILL.md"],
-      "sha256": {
-        "SKILL.md": "dbc36f1091a266fa2cb4526c088d1a457523e7ed6ff0eef415c17371dd9d78b3"
-      },
-      "installedAt": "2026-05-01T16:24:17.595Z",
-      "source": "https://raw.githubusercontent.com/fal-ai-community/genmedia-cli/refs/heads/main/skills/genmedia-ref"
     }
   ]
 }
