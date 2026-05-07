@@ -9,11 +9,11 @@ const nextConfig: NextConfig = {
       afterFiles: [
         {
           source: "/",
-          destination: "https://gm-cli.webflow.io/",
+          destination: "https://genmedia-sh.fal.ai/",
         },
         {
           source: "/:path*",
-          destination: "https://gm-cli.webflow.io/:path*",
+          destination: "https://genmedia-sh.fal.ai/:path*",
         },
       ],
     };
