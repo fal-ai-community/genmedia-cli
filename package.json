@@ -9,6 +9,9 @@
   "scripts": {
     "build": "bun run scripts/gen-version.ts && bun build --compile --minify --bytecode src/index.ts --outfile dist/genmedia",
     "dev": "bun run src/index.ts",
+    "web:dev": "cd web && bun run dev",
+    "web:build": "cd web && bun run build",
+    "web:start": "cd web && bun run start",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write",
     "lint": "biome lint --write",

@@ -4,14 +4,19 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "https://fal.ai/docs/genmedia",
-        permanent: false,
-      },
-    ];
+  async rewrites() {
+    return {
+      afterFiles: [
+        {
+          source: "/",
+          destination: "https://genmedia-sh.fal.ai/",
+        },
+        {
+          source: "/:path*",
+          destination: "https://genmedia-sh.fal.ai/:path*",
+        },
+      ],
+    };
   },
 };
 
