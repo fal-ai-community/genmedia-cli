@@ -3,6 +3,7 @@ import {
   createDecipheriv,
   createHash,
   randomBytes,
+  randomUUID,
 } from "node:crypto";
 import {
   chmodSync,
@@ -24,6 +25,8 @@ export interface GenmediaConfig {
   autoUpdate?: boolean;
   lastUpdateCheckAt?: number;
   latestKnownVersion?: string;
+  installationId?: string;
+  analyticsOptOut?: boolean;
 }
 
 // On-disk representation — apiKey is stored encrypted, never plaintext
@@ -34,6 +37,8 @@ interface StoredConfig {
   autoUpdate?: boolean;
   lastUpdateCheckAt?: number;
   latestKnownVersion?: string;
+  installationId?: string;
+  analyticsOptOut?: boolean;
 }
 
 export const CONFIG_DIR = join(userInfo().homedir, ".genmedia");
@@ -91,6 +96,8 @@ export function loadConfig(): GenmediaConfig {
         autoUpdate: stored.autoUpdate,
         lastUpdateCheckAt: stored.lastUpdateCheckAt,
         latestKnownVersion: stored.latestKnownVersion,
+        installationId: stored.installationId,
+        analyticsOptOut: stored.analyticsOptOut,
         ...(stored.apiKey
           ? { apiKey: decryptApiKey(stored.apiKey) ?? undefined }
           : {}),
@@ -114,6 +121,8 @@ export function saveConfig(config: GenmediaConfig): void {
     autoUpdate: config.autoUpdate,
     lastUpdateCheckAt: config.lastUpdateCheckAt,
     latestKnownVersion: config.latestKnownVersion,
+    installationId: config.installationId,
+    analyticsOptOut: config.analyticsOptOut,
     ...(config.apiKey ? { apiKey: encryptApiKey(config.apiKey) } : {}),
   };
   writeFileSync(CONFIG_FILE, JSON.stringify(stored, null, 2), "utf-8");
@@ -124,4 +133,15 @@ export function saveConfig(config: GenmediaConfig): void {
     // Windows — permissions work differently, not an error
   }
   _cached = config;
+}
+
+// Returns the persistent installation ID. Generates one on first call and
+// persists it to the config file. Used as the PostHog distinct_id and any
+// other anonymous-but-stable identifier the CLI needs.
+export function getOrCreateInstallationId(): string {
+  const cfg = loadConfig();
+  if (cfg.installationId) return cfg.installationId;
+  const id = randomUUID();
+  saveConfig({ ...cfg, installationId: id });
+  return id;
 }

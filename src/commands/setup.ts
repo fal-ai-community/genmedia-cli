@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../lib/analytics";
 import {
   CONFIG_DIR,
   type GenmediaConfig,
@@ -133,6 +134,7 @@ async function runNonInteractive(args: Record<string, unknown>): Promise<void> {
   }
 
   saveConfig(next);
+  track("setup_completed", { interactive: false });
   output(summaryPayload(next));
 }
 
@@ -253,6 +255,7 @@ async function runInteractive(): Promise<void> {
     };
 
     saveConfig(config);
+    track("setup_completed", { interactive: true });
 
     printLine();
     printLine(

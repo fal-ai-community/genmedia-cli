@@ -1,4 +1,5 @@
 import { type CommandDef, defineCommand, renderUsage, runMain } from "citty";
+import { initAnalytics, shutdownAnalytics, track } from "./lib/analytics";
 import { renderBanner } from "./lib/banner";
 import { loadConfig } from "./lib/config";
 import { loadDotEnv } from "./lib/env";
@@ -16,6 +17,30 @@ import {
 } from "./lib/updater";
 import { VERSION } from "./lib/version";
 
+const KNOWN_COMMANDS = new Set([
+  "setup",
+  "init",
+  "skills",
+  "models",
+  "schema",
+  "run",
+  "status",
+  "upload",
+  "pricing",
+  "docs",
+  "version",
+  "update",
+]);
+
+function sanitizeCommandName(arg: string | undefined): string {
+  if (!arg) return "(root)";
+  if (arg === "--help" || arg === "-h") return "(help)";
+  if (arg === "--version") return "version";
+  if (arg === "--json") return "(root)";
+  if (KNOWN_COMMANDS.has(arg)) return arg;
+  return "(unknown)";
+}
+
 preSwapPendingUpdate();
 
 // Internal entrypoint used by the background auto-update subprocess.
@@ -23,11 +48,12 @@ preSwapPendingUpdate();
 if (process.argv[2] === "__update-check") {
   runBackgroundUpdateCheck().finally(() => process.exit(0));
 } else {
-  startCli();
+  void startCli();
 }
 
-function startCli(): void {
+async function startCli(): Promise<void> {
   loadDotEnv();
+  initAnalytics();
   maybeTriggerBackgroundUpdate();
 
   // JSON help schema for agents — output before citty intercepts --help
@@ -44,6 +70,8 @@ function startCli(): void {
       env: {
         FAL_KEY:
           "Your fal.ai API key. Can also be set via `genmedia setup` (interactive) or `genmedia setup --non-interactive --api-key <key>` (for agents/CI). Get one at https://fal.ai/dashboard/keys",
+        GENMEDIA_NO_ANALYTICS:
+          "Set to 1 to disable anonymous usage analytics (also configurable via `analyticsOptOut: true` in ~/.genmedia/config.json)",
       },
       commands: {
         models: {
@@ -181,6 +209,8 @@ function startCli(): void {
         },
       },
     });
+    track("command_run", { name: "(json-help)", ok: true, durationMs: 0 });
+    await shutdownAnalytics();
     process.exit(0);
   }
 
@@ -221,31 +251,53 @@ function startCli(): void {
     },
   });
 
-  runMain(main, {
-    showUsage: async (cmd, parent) => {
-      const anyCmd = cmd as CommandDef;
-      const anyParent = parent as CommandDef | undefined;
-      if (isDynamicRunCommand(anyCmd) && isJsonOutput()) {
-        outputRawJson(await renderDynamicRunUsageJson(anyCmd, anyParent));
-        return;
-      }
-      if (process.stdout.isTTY) {
-        console.log(renderBanner(VERSION, "small"));
-      }
-      const usage = isDynamicRunCommand(anyCmd)
-        ? await renderDynamicRunUsage(anyCmd, anyParent)
-        : await renderUsage(cmd, parent);
-      console.log(`${usage}\n`);
+  const commandName = sanitizeCommandName(process.argv[2]);
+  const commandStart = performance.now();
+  let tracked = false;
+  const fireCommandRun = (ok: boolean, errorClass?: string): void => {
+    if (tracked) return;
+    tracked = true;
+    track("command_run", {
+      name: commandName,
+      ok,
+      durationMs: Math.round(performance.now() - commandStart),
+      ...(errorClass ? { errorClass } : {}),
+    });
+  };
 
-      if (!isJsonOutput() && !process.env.FAL_KEY && !loadConfig().apiKey) {
-        console.log(
-          "Tip: set FAL_KEY in your environment or run `genmedia setup` before using model commands.",
-        );
-        console.log(
-          '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
-        );
-        console.log();
-      }
-    },
-  });
+  try {
+    await runMain(main, {
+      showUsage: async (cmd, parent) => {
+        const anyCmd = cmd as CommandDef;
+        const anyParent = parent as CommandDef | undefined;
+        if (isDynamicRunCommand(anyCmd) && isJsonOutput()) {
+          outputRawJson(await renderDynamicRunUsageJson(anyCmd, anyParent));
+          return;
+        }
+        if (process.stdout.isTTY) {
+          console.log(renderBanner(VERSION, "small"));
+        }
+        const usage = isDynamicRunCommand(anyCmd)
+          ? await renderDynamicRunUsage(anyCmd, anyParent)
+          : await renderUsage(cmd, parent);
+        console.log(`${usage}\n`);
+
+        if (!isJsonOutput() && !process.env.FAL_KEY && !loadConfig().apiKey) {
+          console.log(
+            "Tip: set FAL_KEY in your environment or run `genmedia setup` before using model commands.",
+          );
+          console.log(
+            '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
+          );
+          console.log();
+        }
+      },
+    });
+    fireCommandRun(true);
+  } catch (err) {
+    fireCommandRun(false, (err as Error)?.constructor?.name ?? "Error");
+    throw err;
+  } finally {
+    await shutdownAnalytics();
+  }
 }

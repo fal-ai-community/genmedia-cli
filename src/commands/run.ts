@@ -1,5 +1,6 @@
 import { fal } from "@fal-ai/client";
 import { defineCommand } from "citty";
+import { track } from "../lib/analytics";
 import { configureSDK } from "../lib/api";
 import {
   downloadMedia,
@@ -76,17 +77,36 @@ export default defineCommand({
       }
     }
 
+    const modelStart = performance.now();
+
     if (args.async) {
-      const result = await fal.queue.submit(endpointId, { input });
-      output(
-        {
-          status: "submitted",
-          request_id: result.request_id,
-          endpoint_id: endpointId,
-          hint: `Check status: genmedia status ${endpointId} ${result.request_id}`,
-        },
-        { view: "run" },
-      );
+      try {
+        const result = await fal.queue.submit(endpointId, { input });
+        track("model_run", {
+          endpointId,
+          mode: "async",
+          ok: true,
+          durationMs: Math.round(performance.now() - modelStart),
+        });
+        output(
+          {
+            status: "submitted",
+            request_id: result.request_id,
+            endpoint_id: endpointId,
+            hint: `Check status: genmedia status ${endpointId} ${result.request_id}`,
+          },
+          { view: "run" },
+        );
+      } catch (submitErr) {
+        track("model_run", {
+          endpointId,
+          mode: "async",
+          ok: false,
+          durationMs: Math.round(performance.now() - modelStart),
+          errorClass: (submitErr as Error)?.constructor?.name ?? "Error",
+        });
+        throw submitErr;
+      }
       return;
     }
 
@@ -130,6 +150,12 @@ export default defineCommand({
       });
 
       requestId = result.requestId;
+      track("model_run", {
+        endpointId,
+        mode: "subscribe",
+        ok: true,
+        durationMs: Math.round(performance.now() - modelStart),
+      });
       spinner?.succeed(`Run completed (${result.requestId})`);
 
       let downloaded: Awaited<ReturnType<typeof downloadMedia>> | undefined;
@@ -178,8 +204,16 @@ export default defineCommand({
         { view: "run", showLogs },
       );
     } catch (runError) {
-      spinner?.fail(requestId ? `Run failed (${requestId})` : "Run failed");
       const formatted = formatApiError(runError, "Run failed");
+      track("model_run", {
+        endpointId,
+        mode: "subscribe",
+        ok: false,
+        durationMs: Math.round(performance.now() - modelStart),
+        errorClass:
+          formatted.name ?? (runError as Error)?.constructor?.name ?? "Error",
+      });
+      spinner?.fail(requestId ? `Run failed (${requestId})` : "Run failed");
       error(
         formatted.message,
         {
