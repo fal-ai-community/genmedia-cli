@@ -44,6 +44,16 @@ function startCli(): void {
       env: {
         FAL_KEY:
           "Your fal.ai API key. Can also be set via `genmedia setup` (interactive) or `genmedia setup --non-interactive --api-key <key>` (for agents/CI). Get one at https://fal.ai/dashboard/keys",
+        FAL_AUTH_DEBUG:
+          "Set to 1 to print debug logs from the auth flow (works in any build).",
+        FAL_AUTH_DOMAIN:
+          "Dev builds only — override the Auth0 issuer used by `auth login` (default: https://auth.fal.ai). Ignored in the released binary.",
+        FAL_AUTH_CLIENT_ID:
+          "Dev builds only — override the Auth0 client_id. Ignored in the released binary.",
+        FAL_AUTH_AUDIENCE:
+          "Dev builds only — override the Auth0 API audience. Ignored in the released binary.",
+        FAL_BASE_URL:
+          "Dev builds only — override the fal.ai base URL for the session-seed hop (e.g. http://localhost:3000). Ignored in the released binary.",
       },
       commands: {
         models: {
@@ -133,14 +143,37 @@ function startCli(): void {
               "Set to 1 to disable all automatic update checks (manual `update` still works)",
           },
         },
+        auth: {
+          description:
+            "Sign in to your fal.ai account, sign out, or check session status (Auth0 device-code flow via auth.fal.ai)",
+          usage: "genmedia auth <login|logout|status> [args]",
+          subcommands: {
+            login:
+              "genmedia auth login [--force] [--connection <google|github|...>] — open the browser to sign in",
+            logout: "genmedia auth logout [--revoke] — clear local session",
+            status:
+              "genmedia auth status [--verify] — show current auth source and user",
+          },
+          env: {
+            FAL_AUTH_DEBUG: "Set to 1 to print debug logs from the auth flow.",
+            FAL_AUTH_DOMAIN:
+              "Dev builds only — override the Auth0 issuer. Ignored in the released binary.",
+            FAL_AUTH_CLIENT_ID:
+              "Dev builds only — override the Auth0 client_id. Ignored in the released binary.",
+            FAL_BASE_URL:
+              "Dev builds only — override the fal.ai base URL (e.g. http://localhost:3000). Ignored in the released binary.",
+          },
+        },
         setup: {
           description:
-            "Configure your fal.ai API key and preferences (supports non-interactive mode for agents/CI)",
+            "Configure your fal.ai sign-in or API key and CLI preferences (supports non-interactive mode for agents/CI)",
           usage:
-            "genmedia setup [--non-interactive --api-key <key> --output-format <auto|json|standard> [--no-]auto-load-env [--no-]auto-update]",
+            "genmedia setup [--non-interactive --auth-mode <session|key|skip> --api-key <key> --output-format <auto|json|standard> [--no-]auto-load-env [--no-]auto-update]",
           options: {
             "--non-interactive":
               "Skip all prompts. Required to run without a TTY. Alias: -y. Fields not passed keep their current values.",
+            "--auth-mode":
+              "Preferred auth mode: session (sign in via `genmedia auth login`), key (use API key), or skip.",
             "--api-key":
               "API key to save when running with --non-interactive. Pass an empty string to clear the saved key.",
             "--no-save-key":
@@ -196,6 +229,7 @@ function startCli(): void {
       description: "Agent-first CLI for fal.ai",
     },
     subCommands: {
+      auth: () => import("./commands/auth/index").then((m) => m.default),
       setup: () => import("./commands/setup").then((m) => m.default),
       init: () => import("./commands/init").then((m) => m.default),
       skills: () => import("./commands/skills/index").then((m) => m.default),
@@ -237,9 +271,14 @@ function startCli(): void {
         : await renderUsage(cmd, parent);
       console.log(`${usage}\n`);
 
-      if (!isJsonOutput() && !process.env.FAL_KEY && !loadConfig().apiKey) {
+      if (
+        !isJsonOutput() &&
+        !process.env.FAL_KEY &&
+        !loadConfig().apiKey &&
+        !loadConfig().session
+      ) {
         console.log(
-          "Tip: set FAL_KEY in your environment or run `genmedia setup` before using model commands.",
+          "Tip: run `genmedia auth login` to sign in with your fal.ai account, set FAL_KEY in your environment, or run `genmedia setup`.",
         );
         console.log(
           '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
