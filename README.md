@@ -190,6 +190,8 @@ Released binaries report anonymous usage analytics (PostHog) to help us prioriti
 - `skills_installed` / `skills_updated` / `skills_removed` — skill name and status
 - `update_applied` — self-update succeeded, with from/to versions
 
+**Caller context:** every event also carries the detected calling agent (e.g. `claude-code`, `codex`, `cursor-agent`, `gemini-cli`, `aider`), the host terminal (`vscode`, `iterm`, `warp`, …), CI flags (`ci`, `ci_provider`, `github_actions`), TTY status, and a per-process `invocation_id` so multiple events from the same CLI run can be stitched together. Detection is env-var based and never collects user content. Set `GENMEDIA_USER_AGENT=<name>` to override or self-attribute when running inside an agent we don't yet detect.
+
 **Opt out:**
 
 ```bash
