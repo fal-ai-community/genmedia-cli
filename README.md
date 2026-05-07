@@ -176,6 +176,30 @@ genmedia update --force      # reinstall even if already on the latest
 
 When automatic updates are enabled (default), every TTY invocation may trigger a rate-limited (1/hour) background check that stages the next release. The next `genmedia` launch atomically swaps it in. Set `GENMEDIA_NO_UPDATE=1` to disable all background checks; the manual `update` command still works.
 
+## Analytics
+
+Released binaries report anonymous usage analytics (PostHog) to help us prioritize improvements. Each install gets a random UUID stored in `~/.genmedia/config.json`; we never collect command arguments, prompts, file paths, API keys, or error messages.
+
+**Events:**
+
+- `command_run` — top-level command name, success/failure, duration
+- `cli_first_run` — fired once when the install is first seen
+- `setup_completed` — `setup` finished successfully
+- `model_run` — `run` finished, with the model endpoint, success/failure, and duration (no inputs or outputs)
+- `skills_searched` — `skills list [query]` — the query string and result count
+- `skills_installed` / `skills_updated` / `skills_removed` — skill name and status
+- `update_applied` — self-update succeeded, with from/to versions
+
+**Opt out:**
+
+```bash
+export GENMEDIA_NO_ANALYTICS=1            # per-shell
+# or persist in config:
+genmedia setup    # (toggle is currently file-only — set "analyticsOptOut": true)
+```
+
+Builds from source without a `POSTHOG_KEY` environment variable (the open-source default) report nothing — the analytics module no-ops at runtime.
+
 ### `init` — Install the default genmedia skill bundle
 
 ```bash

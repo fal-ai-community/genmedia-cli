@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../../lib/analytics";
 import { isJsonOutput, output } from "../../lib/output";
 import { installSkill } from "../../lib/skills-install";
 import { colors } from "../../lib/ui";
@@ -21,6 +22,12 @@ export default defineCommand({
   },
   async run({ args }) {
     const result = await installSkill(process.cwd(), args.name, {
+      force: Boolean(args.force),
+    });
+
+    track("skills_installed", {
+      name: args.name,
+      status: result.status,
       force: Boolean(args.force),
     });
 

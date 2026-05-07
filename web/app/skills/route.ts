@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { trackServer } from "@/lib/analytics";
 import {
   fetchSkillsIndex,
   getRegistryUrl,
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     index = await fetchSkillsIndex();
   } catch (err) {
+    trackServer("skills_searched", { query, ok: false });
     return Response.json(
       {
         error: "skills registry unavailable",
@@ -31,6 +33,13 @@ export async function GET(request: NextRequest) {
     limit && Number.isFinite(limit) && limit > 0
       ? matches.slice(0, limit)
       : matches;
+
+  trackServer("skills_searched", {
+    query,
+    ok: true,
+    resultCount: skills.length,
+    totalSkills: index.skills.length,
+  });
 
   return Response.json(
     {

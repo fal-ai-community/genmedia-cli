@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../lib/analytics";
 import { isJsonOutput, output } from "../lib/output";
 import { getIndex, installSkill } from "../lib/skills-install";
 import { resolveSkillsBase } from "../lib/skills-registry";
@@ -41,6 +42,12 @@ export default defineCommand({
         name,
         status: result.status,
         installedDir: result.installedDir,
+      });
+      track("skills_installed", {
+        name,
+        status: result.status,
+        force: Boolean(args.force),
+        source: "init",
       });
     }
 
