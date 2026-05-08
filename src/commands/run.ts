@@ -140,6 +140,18 @@ export default defineCommand({
       }
     }
 
+    // Flat discriminator for analytics dashboards; the nested `routed` field
+    // carries the modality + manifest source for routed calls.
+    const trackingMode: {
+      caller_mode: "routed" | "explicit";
+      routed?: { modality: Modality; source: ResolvedDefault["source"] };
+    } = routed
+      ? {
+          caller_mode: "routed",
+          routed: { modality: routed.modality, source: routed.source },
+        }
+      : { caller_mode: "explicit" };
+
     const modelStart = performance.now();
 
     if (args.async) {
@@ -150,9 +162,7 @@ export default defineCommand({
           mode: "async",
           ok: true,
           durationMs: Math.round(performance.now() - modelStart),
-          ...(routed
-            ? { routed: { modality: routed.modality, source: routed.source } }
-            : {}),
+          ...trackingMode,
         });
         output(
           {
@@ -171,9 +181,7 @@ export default defineCommand({
           ok: false,
           durationMs: Math.round(performance.now() - modelStart),
           errorClass: (submitErr as Error)?.constructor?.name ?? "Error",
-          ...(routed
-            ? { routed: { modality: routed.modality, source: routed.source } }
-            : {}),
+          ...trackingMode,
         });
         throw submitErr;
       }
@@ -225,9 +233,7 @@ export default defineCommand({
         mode: "subscribe",
         ok: true,
         durationMs: Math.round(performance.now() - modelStart),
-        ...(routed
-          ? { routed: { modality: routed.modality, source: routed.source } }
-          : {}),
+        ...trackingMode,
       });
       spinner?.succeed(`Run completed (${result.requestId})`);
 
@@ -286,9 +292,7 @@ export default defineCommand({
         durationMs: Math.round(performance.now() - modelStart),
         errorClass:
           formatted.name ?? (runError as Error)?.constructor?.name ?? "Error",
-        ...(routed
-          ? { routed: { modality: routed.modality, source: routed.source } }
-          : {}),
+        ...trackingMode,
       });
       spinner?.fail(requestId ? `Run failed (${requestId})` : "Run failed");
       error(
