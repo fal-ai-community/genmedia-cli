@@ -17,6 +17,17 @@ import { join } from "node:path";
 
 export type OutputFormat = "auto" | "json" | "standard";
 
+// Forward-declared shape of the routing-defaults manifest cache. The full
+// `DefaultsManifest` type lives in `src/lib/defaults-manifest.ts` to keep the
+// classifier+manifest module self-contained.
+export interface DefaultsManifestCacheEntry {
+  fetchedAt: number;
+  manifest: {
+    version: 1;
+    defaults: Record<string, string>;
+  };
+}
+
 // In-memory representation — apiKey is always decrypted here
 export interface GenmediaConfig {
   apiKey?: string;
@@ -27,6 +38,7 @@ export interface GenmediaConfig {
   latestKnownVersion?: string;
   installationId?: string;
   analyticsOptOut?: boolean;
+  defaultsManifestCache?: DefaultsManifestCacheEntry;
 }
 
 // On-disk representation — apiKey is stored encrypted, never plaintext
@@ -39,6 +51,7 @@ interface StoredConfig {
   latestKnownVersion?: string;
   installationId?: string;
   analyticsOptOut?: boolean;
+  defaultsManifestCache?: DefaultsManifestCacheEntry;
 }
 
 export const CONFIG_DIR = join(userInfo().homedir, ".genmedia");
@@ -98,6 +111,7 @@ export function loadConfig(): GenmediaConfig {
         latestKnownVersion: stored.latestKnownVersion,
         installationId: stored.installationId,
         analyticsOptOut: stored.analyticsOptOut,
+        defaultsManifestCache: stored.defaultsManifestCache,
         ...(stored.apiKey
           ? { apiKey: decryptApiKey(stored.apiKey) ?? undefined }
           : {}),
@@ -123,6 +137,7 @@ export function saveConfig(config: GenmediaConfig): void {
     latestKnownVersion: config.latestKnownVersion,
     installationId: config.installationId,
     analyticsOptOut: config.analyticsOptOut,
+    defaultsManifestCache: config.defaultsManifestCache,
     ...(config.apiKey ? { apiKey: encryptApiKey(config.apiKey) } : {}),
   };
   writeFileSync(CONFIG_FILE, JSON.stringify(stored, null, 2), "utf-8");

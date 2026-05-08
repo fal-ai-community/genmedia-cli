@@ -3,11 +3,16 @@ import { defineCommand } from "citty";
 import { track } from "../lib/analytics";
 import { configureSDK } from "../lib/api";
 import {
+  type ResolvedDefault,
+  resolveDefaultEndpoint,
+} from "../lib/defaults-manifest";
+import {
   downloadMedia,
   extractMediaRefs,
   parseDownloadFlag,
 } from "../lib/download";
 import { formatApiError } from "../lib/error-format";
+import { classifyModality, type Modality } from "../lib/modality";
 import { error, isPrettyOutput, output } from "../lib/output";
 import { parseValue } from "../lib/parse-value";
 import {
@@ -22,13 +27,23 @@ function formatLiveLog(log: CliLogEntry): string {
   return `  ${colors.bold(log.level.padEnd(7))} ${log.message}${timestamp}`;
 }
 
+interface RoutedInfo {
+  modality: Modality;
+  source: ResolvedDefault["source"];
+  from_prompt: string;
+}
+
 export default defineCommand({
-  meta: { name: "run", description: "Run any model (waits for result)" },
+  meta: {
+    name: "run",
+    description:
+      'Run a model. Pass an endpoint ID, or a prompt for smart routing (e.g. `genmedia run "a cat on the moon"`).',
+  },
   args: {
     endpointId: {
       type: "positional",
-      required: true,
-      description: "Model endpoint ID",
+      required: false,
+      description: "Model endpoint ID, or a prompt for smart routing",
     },
     async: {
       type: "boolean",
@@ -46,8 +61,6 @@ export default defineCommand({
   },
   async run({ args }) {
     configureSDK();
-
-    const { endpointId } = args;
 
     const argv = process.argv.slice(2);
     const download = parseDownloadFlag(argv);
@@ -77,6 +90,68 @@ export default defineCommand({
       }
     }
 
+    // Decide whether the positional is an endpoint ID (contains "/") or a
+    // prompt (smart routing kicks in). Endpoint IDs always look like
+    // "fal-ai/<family>/<variant>"; prompts almost never contain a slash.
+    const positional = args.endpointId;
+    let endpointId: string | undefined;
+    let routed: RoutedInfo | undefined;
+
+    if (positional?.includes("/")) {
+      endpointId = positional;
+    } else {
+      const promptFromPositional =
+        positional && !positional.includes("/") ? positional : undefined;
+      const promptFromInput =
+        typeof input.prompt === "string" ? (input.prompt as string) : undefined;
+      const prompt = promptFromPositional ?? promptFromInput;
+
+      if (!prompt) {
+        error(
+          "Run requires either an endpoint ID, a prompt positional, or --prompt",
+          {
+            usage: 'genmedia run [<endpoint_id> | "<prompt>"] [--key value …]',
+            examples: [
+              "genmedia run fal-ai/flux/dev --prompt 'a cat'",
+              "genmedia run 'a cat on the moon'",
+              "genmedia run --prompt 'a cat'",
+            ],
+          },
+        );
+      }
+
+      const modality = classifyModality(prompt);
+      const resolved = await resolveDefaultEndpoint(modality);
+      endpointId = resolved.endpoint_id;
+      routed = {
+        modality,
+        source: resolved.source,
+        from_prompt: prompt,
+      };
+      // Inject prompt into input only if it wasn't already passed via --prompt
+      if (input.prompt === undefined) {
+        input.prompt = prompt;
+      }
+
+      if (isPrettyOutput()) {
+        process.stderr.write(
+          `${colors.dim(`Routing → ${modality} → ${endpointId}`)}\n`,
+        );
+      }
+    }
+
+    // Flat discriminator for analytics dashboards; the nested `routed` field
+    // carries the modality + manifest source for routed calls.
+    const trackingMode: {
+      caller_mode: "routed" | "explicit";
+      routed?: { modality: Modality; source: ResolvedDefault["source"] };
+    } = routed
+      ? {
+          caller_mode: "routed",
+          routed: { modality: routed.modality, source: routed.source },
+        }
+      : { caller_mode: "explicit" };
+
     const modelStart = performance.now();
 
     if (args.async) {
@@ -87,12 +162,14 @@ export default defineCommand({
           mode: "async",
           ok: true,
           durationMs: Math.round(performance.now() - modelStart),
+          ...trackingMode,
         });
         output(
           {
             status: "submitted",
             request_id: result.request_id,
             endpoint_id: endpointId,
+            ...(routed ? { routed } : {}),
             hint: `Check status: genmedia status ${endpointId} ${result.request_id}`,
           },
           { view: "run" },
@@ -104,6 +181,7 @@ export default defineCommand({
           ok: false,
           durationMs: Math.round(performance.now() - modelStart),
           errorClass: (submitErr as Error)?.constructor?.name ?? "Error",
+          ...trackingMode,
         });
         throw submitErr;
       }
@@ -155,6 +233,7 @@ export default defineCommand({
         mode: "subscribe",
         ok: true,
         durationMs: Math.round(performance.now() - modelStart),
+        ...trackingMode,
       });
       spinner?.succeed(`Run completed (${result.requestId})`);
 
@@ -195,6 +274,7 @@ export default defineCommand({
           endpoint_id: endpointId,
           request_id: result.requestId,
           result: result.data,
+          ...(routed ? { routed } : {}),
           ...(downloaded ? { downloaded_files: downloaded.downloaded } : {}),
           ...(downloaded && downloaded.failed.length > 0
             ? { download_failures: downloaded.failed }
@@ -212,6 +292,7 @@ export default defineCommand({
         durationMs: Math.round(performance.now() - modelStart),
         errorClass:
           formatted.name ?? (runError as Error)?.constructor?.name ?? "Error",
+        ...trackingMode,
       });
       spinner?.fail(requestId ? `Run failed (${requestId})` : "Run failed");
       error(
@@ -226,6 +307,7 @@ export default defineCommand({
           ...(formatted.validation_errors
             ? { validation_errors: formatted.validation_errors }
             : {}),
+          ...(routed ? { routed } : {}),
           ...(logs.length > 0 ? { logs: logs.slice(-10) } : {}),
           ...(formatted.body !== undefined ? { body: formatted.body } : {}),
         },
