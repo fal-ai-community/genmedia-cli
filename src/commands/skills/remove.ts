@@ -17,12 +17,15 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const { removed, installedDir } = uninstallSkill(process.cwd(), args.name);
+    const { removed, installedDir, targets } = await uninstallSkill(
+      process.cwd(),
+      args.name,
+    );
 
     track("skills_removed", { name: args.name, removed });
 
     if (isJsonOutput()) {
-      output({ name: args.name, removed, installedDir });
+      output({ name: args.name, removed, installedDir, targets });
       return;
     }
 

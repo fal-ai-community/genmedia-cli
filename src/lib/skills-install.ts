@@ -1,11 +1,20 @@
+import { existsSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import {
+  type AgentTargetKind,
+  ALL_TARGETS,
+  buildSkillContent,
+  resolveTargets,
+  type TargetOptions,
+} from "./agent-targets";
 import { error } from "./output";
 import {
-  AGENT_ROOTS,
   fetchIndex,
   fetchSkillFile,
   findSkill,
   getRegistryUrl,
   type InstalledSkill,
+  type InstalledTarget,
   readInstalledManifest,
   removeInstalled,
   removeSkillDir,
@@ -14,15 +23,22 @@ import {
   sha256,
   upsertInstalled,
   writeInstalledManifest,
-  writeSkillFiles,
 } from "./skills-registry";
 import { colors, createSpinner, symbols } from "./ui";
+
+const DEFAULT_MANIFEST_BASE = ".claude/skills";
 
 export interface InstallOptions {
   force?: boolean;
   silent?: boolean;
   sharedIndex?: SkillsIndex;
   spinner?: ReturnType<typeof createSpinner>;
+  targetOptions?: TargetOptions;
+}
+
+export interface InstallTargetResult {
+  kind: AgentTargetKind;
+  paths: string[];
 }
 
 export interface InstallResult {
@@ -30,6 +46,7 @@ export interface InstallResult {
   status: "installed" | "updated" | "skipped";
   installedDir: string;
   files: string[];
+  targets: InstallTargetResult[];
 }
 
 export async function getIndex(): Promise<SkillsIndex> {
@@ -43,15 +60,11 @@ export async function getIndex(): Promise<SkillsIndex> {
   }
 }
 
-function requireSkillsBase(cwd: string): string {
-  const base = resolveSkillsBase(cwd);
-  if (!base) {
-    error(
-      `No agent directory found. Create '${AGENT_ROOTS[0]}/' or '${AGENT_ROOTS[1]}/' in this project and try again.`,
-      { checked: AGENT_ROOTS.map((r) => `${r}/`) },
-    );
-  }
-  return base;
+function manifestBase(cwd: string): string {
+  const resolved = resolveSkillsBase(cwd);
+  if (resolved) return resolved;
+  mkdirSync(join(cwd, DEFAULT_MANIFEST_BASE), { recursive: true });
+  return DEFAULT_MANIFEST_BASE;
 }
 
 export async function installSkill(
@@ -59,8 +72,6 @@ export async function installSkill(
   name: string,
   options: InstallOptions = {},
 ): Promise<InstallResult> {
-  const base = requireSkillsBase(cwd);
-
   const spinner = options.spinner ?? createSpinner();
   const ownSpinner = !options.spinner;
   if (ownSpinner && !options.silent) spinner.start(`Fetching registry…`);
@@ -77,19 +88,20 @@ export async function installSkill(
   let manifest = readInstalledManifest(cwd);
   const already = manifest.skills.some((s) => s.name === name);
   if (already && !options.force) {
-    if (ownSpinner) {
-      spinner.stop();
-    }
+    if (ownSpinner) spinner.stop();
     if (!options.silent) {
       spinner.log(
         `${colors.yellow(symbols.warning)} ${name} already installed (use --force to reinstall)`,
       );
     }
+    const previous = manifest.skills.find((s) => s.name === name);
     return {
       name,
       status: "skipped",
-      installedDir: `${base}/${name}`,
+      installedDir: `${manifestBase(cwd)}/${name}`,
       files: entry.files.map((f) => f.path),
+      targets:
+        previous?.targets?.map((t) => ({ kind: t.kind, paths: t.paths })) ?? [],
     };
   }
 
@@ -109,15 +121,32 @@ export async function installSkill(
     files.push({ path: f.path, content });
   }
 
-  writeSkillFiles(cwd, base, name, files);
+  const skill = buildSkillContent(name, entry.description, files);
+
+  const enabledTargets = resolveTargets(cwd, options.targetOptions ?? {});
+  const targetWrites: InstalledTarget[] = [];
+  for (const target of enabledTargets) {
+    const result = await target.write(cwd, skill);
+    targetWrites.push({
+      kind: result.kind,
+      paths: result.paths,
+      sha256: result.sha256,
+    });
+  }
+
+  const base = manifestBase(cwd);
+  const claudeWrite = targetWrites.find((t) => t.kind === "claude");
 
   const record: InstalledSkill = {
     name: entry.name,
     description: entry.description,
-    files: entry.files.map((f) => f.path),
-    sha256: Object.fromEntries(entry.files.map((f) => [f.path, f.sha256])),
+    files: claudeWrite?.paths ?? entry.files.map((f) => f.path),
+    sha256:
+      claudeWrite?.sha256 ??
+      Object.fromEntries(entry.files.map((f) => [f.path, f.sha256])),
     installedAt: new Date().toISOString(),
     source: `${getRegistryUrl()}/${name}`,
+    targets: targetWrites,
   };
   manifest = upsertInstalled(manifest, record);
   writeInstalledManifest(cwd, base, manifest);
@@ -127,8 +156,9 @@ export async function installSkill(
       `${already ? "Updated" : "Installed"} ${colors.bold(name)}`,
     );
   } else if (!options.silent) {
+    const targetSummary = targetWrites.map((t) => t.kind).join(", ");
     spinner.log(
-      `  ${colors.green(symbols.success)} ${colors.bold(name)}  ${colors.dim(`${files.length} file${files.length === 1 ? "" : "s"}`)}`,
+      `  ${colors.green(symbols.success)} ${colors.bold(name)}  ${colors.dim(targetSummary)}`,
     );
   }
 
@@ -137,27 +167,52 @@ export async function installSkill(
     status: already ? "updated" : "installed",
     installedDir: `${base}/${name}`,
     files: entry.files.map((f) => f.path),
+    targets: targetWrites.map((t) => ({ kind: t.kind, paths: t.paths })),
   };
 }
 
-export function uninstallSkill(
+export interface UninstallResult {
+  removed: boolean;
+  installedDir: string | null;
+  targets: InstallTargetResult[];
+}
+
+export async function uninstallSkill(
   cwd: string,
   name: string,
-): { removed: boolean; installedDir: string | null } {
+): Promise<UninstallResult> {
   const base = resolveSkillsBase(cwd);
-  if (!base) {
-    return { removed: false, installedDir: null };
-  }
-
   let manifest = readInstalledManifest(cwd);
   const entry = manifest.skills.find((s) => s.name === name);
 
-  const fileRemoved = removeSkillDir(cwd, base, name);
+  const removed: InstallTargetResult[] = [];
+
+  if (entry?.targets && entry.targets.length > 0) {
+    for (const t of entry.targets) {
+      const target = ALL_TARGETS.find((x) => x.kind === t.kind);
+      if (!target) continue;
+      const result = await target.remove(cwd, name);
+      if (result.paths.length > 0) {
+        removed.push({ kind: result.kind, paths: result.paths });
+      }
+    }
+  } else if (base) {
+    const fileRemoved = removeSkillDir(cwd, base, name);
+    if (fileRemoved) {
+      removed.push({ kind: "claude", paths: [`${base}/${name}`] });
+    }
+  }
+
   manifest = removeInstalled(manifest, name);
-  writeInstalledManifest(cwd, base, manifest);
+  if (base) {
+    writeInstalledManifest(cwd, base, manifest);
+  } else if (existsSync(join(cwd, DEFAULT_MANIFEST_BASE))) {
+    writeInstalledManifest(cwd, DEFAULT_MANIFEST_BASE, manifest);
+  }
 
   return {
-    removed: Boolean(entry) || fileRemoved,
-    installedDir: `${base}/${name}`,
+    removed: Boolean(entry) || removed.length > 0,
+    installedDir: base ? `${base}/${name}` : null,
+    targets: removed,
   };
 }

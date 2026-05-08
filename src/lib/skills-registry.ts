@@ -45,6 +45,14 @@ export interface SkillSearchResponse {
   skills: SkillSearchHit[];
 }
 
+export type InstalledTargetKind = "claude" | "cursor" | "agents-md";
+
+export interface InstalledTarget {
+  kind: InstalledTargetKind;
+  paths: string[];
+  sha256: Record<string, string>;
+}
+
 export interface InstalledSkill {
   name: string;
   description: string;
@@ -52,6 +60,7 @@ export interface InstalledSkill {
   sha256: Record<string, string>;
   installedAt: string;
   source: string;
+  targets?: InstalledTarget[];
 }
 
 export interface InstalledManifest {
