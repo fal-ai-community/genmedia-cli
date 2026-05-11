@@ -1,3 +1,4 @@
+import { getCallerInfo } from "./caller";
 import { getOrCreateInstallationId, loadConfig } from "./config";
 import { getOutputMode } from "./output";
 import { VERSION } from "./version";
@@ -62,6 +63,7 @@ export function initAnalytics(): void {
           ? `bun-${process.versions.bun}`
           : `node-${process.version}`,
         outputMode: getOutputMode(),
+        ...getCallerInfo(),
       };
 
       _enabled = true;
