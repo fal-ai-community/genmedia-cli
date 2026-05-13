@@ -1,5 +1,7 @@
 import { defineCommand } from "citty";
+import { track } from "../lib/analytics";
 import { PLATFORM_BASE, platformHeaders } from "../lib/api";
+import { classifyModality, modalityToCategory } from "../lib/modality";
 import { error, output } from "../lib/output";
 
 const SUPPORTED_EXPANDS = new Set(["openapi-3.0", "enterprise_status"]);
@@ -147,6 +149,12 @@ export default defineCommand({
       description:
         "Expand fields. Repeat the flag or pass comma-separated values: openapi-3.0, enterprise_status",
     },
+    classify: {
+      type: "boolean",
+      default: true,
+      description:
+        "When --category is not set, infer it from the query. Use --no-classify to disable.",
+    },
   },
   async run({ args, rawArgs }) {
     const query = args.query?.trim();
@@ -162,9 +170,24 @@ export default defineCommand({
       }
     }
 
+    // Auto-classify: when no --category was passed and we have a query,
+    // infer the category from the query so agents get a focused result set
+    // instead of every modality. `--no-classify` disables.
+    let inferredCategory: string | undefined;
+    let resolvedCategory = args.category;
+    if (!resolvedCategory && query && args.classify !== false) {
+      const modality = classifyModality(query);
+      inferredCategory = modalityToCategory(modality);
+      resolvedCategory = inferredCategory;
+      track("models_classified", {
+        query,
+        inferred_category: inferredCategory,
+      });
+    }
+
     const url = new URL(`${PLATFORM_BASE}/models`);
     if (query) url.searchParams.set("q", query);
-    if (args.category) url.searchParams.set("category", args.category);
+    if (resolvedCategory) url.searchParams.set("category", resolvedCategory);
     if (args.status !== "all") url.searchParams.set("status", args.status);
     url.searchParams.set("limit", parseLimit(args.limit));
     if (args.cursor) url.searchParams.set("cursor", args.cursor);
@@ -183,7 +206,8 @@ export default defineCommand({
 
     output({
       ...(query ? { query } : {}),
-      ...(args.category ? { category: args.category } : {}),
+      ...(resolvedCategory ? { category: resolvedCategory } : {}),
+      ...(inferredCategory ? { inferred_category: inferredCategory } : {}),
       ...(args.status !== "all" ? { status: args.status } : {}),
       ...(endpointIds.length > 0 ? { endpoint_ids: endpointIds } : {}),
       ...(expand.length > 0 ? { expand } : {}),

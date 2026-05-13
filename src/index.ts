@@ -77,7 +77,7 @@ async function startCli(): Promise<void> {
         models: {
           description: "Search, list, and inspect fal.ai models",
           usage:
-            "genmedia models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>]",
+            "genmedia models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>] [--no-classify]",
           args: "[query]",
           options: {
             "--category":
@@ -89,6 +89,8 @@ async function startCli(): Promise<void> {
             "--endpoint_id":
               "Specific endpoint ID(s). Repeat the flag or pass comma-separated values",
             "--expand": "Expand fields: openapi-3.0, enterprise_status",
+            "--no-classify":
+              "Skip auto-inference of --category from the query (default: on when --category is not set)",
           },
         },
         schema: {
@@ -100,11 +102,16 @@ async function startCli(): Promise<void> {
           },
         },
         run: {
-          description: "Run any model (waits for result)",
+          description:
+            "Run any model. Pass an endpoint ID, or a prompt for smart routing.",
           usage:
-            "genmedia run <endpoint_id> [--key value ...] [--logs] [--download [template]]",
-          args: "<endpoint_id>",
+            'genmedia run [<endpoint_id> | "<prompt>"] [--key value ...] [--logs] [--download [template]]',
+          args: "[<endpoint_id> | <prompt>]",
           options: {
+            "<endpoint_id>":
+              "Endpoint ID (must contain '/', e.g. 'fal-ai/flux/dev')",
+            "<prompt>":
+              "Smart routing: a prompt without '/' (e.g. 'a cat on the moon') is classified by modality and routed to a sensible default endpoint. Override with an explicit endpoint ID.",
             "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
             "--async":
               "Submit to queue instead of waiting (returns request_id)",
@@ -235,7 +242,14 @@ async function startCli(): Promise<void> {
         const argv = process.argv.slice(2);
         if (argv[0] === "run" && argv.includes("--help")) {
           const endpointId = argv[1];
-          if (endpointId && !endpointId.startsWith("--")) {
+          // Only fetch a model schema for true endpoint IDs (which always
+          // contain "/", e.g. fal-ai/flux/dev). A bare prompt like
+          // `genmedia run "a cat" --help` falls through to static run help.
+          if (
+            endpointId &&
+            !endpointId.startsWith("--") &&
+            endpointId.includes("/")
+          ) {
             const dynamic = await buildDynamicRunCommand(endpointId);
             if (dynamic) return dynamic;
           }
