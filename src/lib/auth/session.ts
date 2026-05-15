@@ -1,4 +1,4 @@
-import { closeSync, existsSync, openSync, unlinkSync } from "node:fs";
+import { closeSync, existsSync, openSync, statSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import {
   type AuthSession,
@@ -14,8 +14,15 @@ import { RefreshFailedError, refreshTokens } from "./device";
 export type { AuthSession } from "../config";
 
 const LOCK_FILE = join(CONFIG_DIR, "auth.lock");
-const LOCK_TIMEOUT_MS = 2000;
-const LOCK_POLL_MS = 50;
+// Total time we wait for another process's lock before treating the situation
+// as pathological. Longer than any legitimate refresh round-trip — the only
+// reason to wait this long is if the other process is genuinely doing work.
+const LOCK_WAIT_MS = 30_000;
+// A lock file older than this is almost certainly orphaned by a crashed
+// process. Legitimate holders complete in seconds; STALE_LOCK_MS leaves a
+// generous margin for slow networks, paused VMs, etc.
+const STALE_LOCK_MS = 30_000;
+const LOCK_POLL_MS = 100;
 
 function debug(msg: string): void {
   if (isAuthDebug()) process.stderr.write(`[auth] ${msg}\n`);
@@ -45,7 +52,7 @@ export function decodeJwtExp(token: string): number | null {
     const padded = parts[1] + "=".repeat(padLen);
     const json = Buffer.from(
       padded.replace(/-/g, "+").replace(/_/g, "/"),
-      "base64",
+      "base64"
     ).toString("utf-8");
     const claims = JSON.parse(json) as { exp?: number };
     return typeof claims.exp === "number" ? claims.exp * 1000 : null;
@@ -66,20 +73,40 @@ export function computeExpiresAt(opts: {
 }
 
 async function withLock<T>(fn: () => Promise<T>): Promise<T> {
-  const start = Date.now();
+  const deadline = Date.now() + LOCK_WAIT_MS;
   let fd: number | null = null;
-  while (Date.now() - start < LOCK_TIMEOUT_MS) {
+
+  while (Date.now() < deadline) {
     try {
       fd = openSync(LOCK_FILE, "wx");
       break;
     } catch {
+      // Lock exists — check if it's stale (mtime older than threshold).
+      try {
+        const { mtimeMs } = statSync(LOCK_FILE);
+        if (Date.now() - mtimeMs > STALE_LOCK_MS) {
+          debug("removing stale auth lock");
+          try {
+            unlinkSync(LOCK_FILE);
+          } catch {
+            // Raced with another reclaimer — fall through and retry the open.
+          }
+          continue;
+        }
+      } catch {
+        // Lock file vanished (likely released) between the failed open and the stat — retry the open.
+        continue;
+      }
       await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
     }
   }
+
   if (fd === null) {
-    debug("lock acquire timed out, proceeding without lock");
-    return fn();
+    throw new RefreshFailedError(
+      "Could not acquire auth lock — another genmedia process appears hung. Retry shortly."
+    );
   }
+
   try {
     return await fn();
   } finally {
