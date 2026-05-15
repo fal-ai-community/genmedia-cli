@@ -52,7 +52,7 @@ export function decodeJwtExp(token: string): number | null {
     const padded = parts[1] + "=".repeat(padLen);
     const json = Buffer.from(
       padded.replace(/-/g, "+").replace(/_/g, "/"),
-      "base64"
+      "base64",
     ).toString("utf-8");
     const claims = JSON.parse(json) as { exp?: number };
     return typeof claims.exp === "number" ? claims.exp * 1000 : null;
