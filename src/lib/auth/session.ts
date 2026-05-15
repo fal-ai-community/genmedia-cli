@@ -103,7 +103,8 @@ async function withLock<T>(fn: () => Promise<T>): Promise<T> {
 
   if (fd === null) {
     throw new RefreshFailedError(
-      "Could not acquire auth lock — another genmedia process appears hung. Retry shortly."
+      "Could not acquire auth lock — another genmedia process appears hung. Retry shortly.",
+      false, // transient: another process is racing us; retry should work
     );
   }
 
@@ -166,8 +167,12 @@ export async function getValidAccessToken(opts?: {
           return next.access_token;
         } catch (e) {
           if (e instanceof RefreshFailedError) {
-            debug(`refresh failed: ${e.message}`);
-            clearSession();
+            if (e.terminal) {
+              debug(`refresh terminal: ${e.message}`);
+              clearSession();
+              return null;
+            }
+            debug(`refresh transient: ${e.message} (keeping session)`);
             return null;
           }
           throw e;

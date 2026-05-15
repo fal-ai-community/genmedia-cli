@@ -52,10 +52,32 @@ export class DeviceFlowError extends Error {
 }
 
 export class RefreshFailedError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    public readonly terminal: boolean,
+    public readonly code?: string,
+  ) {
     super(message);
     this.name = "RefreshFailedError";
   }
+}
+
+// OAuth2 error codes that mean the refresh token will never succeed on retry.
+// See RFC 6749 §5.2. Network errors and 5xx/429 responses are transient.
+function isTerminalAuthError(
+  code: string | undefined,
+  status: number,
+): boolean {
+  switch (code) {
+    case "invalid_grant": // token revoked, expired, or rotated out
+    case "invalid_client": // client_id wrong / app deleted
+    case "unauthorized_client": // client not authorized for this grant
+    case "unsupported_grant_type": // grant misconfigured
+      return true;
+  }
+  if (status >= 500 || status === 429) return false; // server-side / rate-limited
+  if (status >= 400) return true; // other 4xx: malformed request, won't fix
+  return false;
 }
 
 function debug(msg: string): void {
@@ -178,6 +200,8 @@ export async function refreshTokens(
       `Refresh failed (${result.status}): ${
         err.error_description ?? err.error ?? "unknown"
       }`,
+      isTerminalAuthError(err.error, result.status),
+      err.error,
     );
   }
   return result.data as TokenResponse;
