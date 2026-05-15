@@ -24,7 +24,7 @@ export default defineCommand({
   async run({ args }) {
     if (!hasInteractiveTerminal()) {
       error("`genmedia auth login` requires an interactive terminal.", {
-        hint: "Run it locally, then copy ~/.genmedia/config.json across machines, or use FAL_KEY in non-interactive environments.",
+        hint: "Set FAL_KEY in non-interactive environments (CI, scripts, headless servers). Sessions are bound to the machine that signed in and cannot be copied across hosts.",
       });
     }
 
