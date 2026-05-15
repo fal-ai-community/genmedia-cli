@@ -161,6 +161,59 @@ genmedia version
 
 Shows the current version and flags any known update (populated by the background checker).
 
+### `gallery` — Browse a per-session HTML preview of generated assets
+
+Every successful `genmedia run` (and `genmedia status --download`) records its outputs into a per-session, self-contained static HTML page under `~/.genmedia/gallery/sessions/<session_id>/index.html`. The page aggregates every image / video / audio / 3D asset produced inside one agent session — across many runs and many endpoints — into a filterable grid with a lightbox view. No server, no dependencies, opens straight from `file://`.
+
+```bash
+genmedia gallery                          # print { session_id, path, url } for the current session
+genmedia gallery info                     # same as above (explicit form)
+genmedia gallery open                     # open the all-sessions index in the default browser
+genmedia gallery open current             # open the current session
+genmedia gallery open latest              # open the most-recently recorded session (works across shells)
+genmedia gallery open <session_id>        # open a specific session
+genmedia gallery open latest --print      # resolve path/url without launching the browser
+genmedia gallery list                     # list every recorded session (newest first, JSON-friendly)
+genmedia gallery list --limit 10          # cap the list (default: 50)
+genmedia gallery clear --yes              # delete the current session (--yes is required)
+genmedia gallery clear latest --yes       # delete the most-recently recorded session
+genmedia gallery clear <session_id> --yes # delete a specific session
+genmedia gallery clear all --yes          # delete every recorded session
+```
+
+The page auto-refreshes via a tiny client-side poll on `./data.json` while a session is "live" (updated in the last 5 min), so new runs land in the open tab without a manual reload.
+
+> `gallery clear` always requires `--yes` and never prompts interactively — same shape for agents and humans. `GENMEDIA_NO_GALLERY=1` only disables *recording*; `list` / `open` / `clear` still work so you can inspect or purge prior galleries.
+
+The `run` and `status --download` responses include the gallery info too:
+
+```json
+{
+  "status": "completed",
+  "endpoint_id": "fal-ai/flux/dev",
+  "request_id": "…",
+  "gallery": {
+    "session_id": "a1b2c3d4e5f6",
+    "path": "/Users/you/.genmedia/gallery/sessions/a1b2c3d4e5f6/index.html",
+    "url": "file:///Users/you/.genmedia/gallery/sessions/a1b2c3d4e5f6/index.html"
+  }
+}
+```
+
+**Session detection (agent-agnostic).** The session id is resolved in this order, so the gallery groups outputs correctly across Claude Code, Codex, Cursor, Amp, Gemini, Aider, and anything else:
+
+1. `GENMEDIA_SESSION_ID` — explicit override (e.g. set from a hook script).
+2. Per-agent env vars: `CODEX_THREAD_ID`, `CLAUDE_SESSION_ID`, `AMP_THREAD_ID`, `CURSOR_TRACE_ID`.
+3. **Process-tree walk** — looks for a known agent binary (claude, codex, cursor, amp, gemini, copilot, opencode, aider, cline) in the ancestor chain via `ps -e`. Critical for Claude Code, whose `Bash` tool spawns a fresh shell per call: `process.ppid` changes every invocation, but the Claude process itself lives for the whole conversation and becomes the stable anchor.
+4. Terminal-level: `TERM_SESSION_ID` / `ITERM_SESSION_ID` / `WT_SESSION` / `TMUX_PANE`.
+5. Fallback: a deterministic hash of `<agent>:<ppid>`.
+
+| Env var | Description |
+|---|---|
+| `GENMEDIA_NO_GALLERY=1` | Disable gallery recording and rendering entirely. |
+| `GENMEDIA_SESSION_ID=<anchor>` | Force a specific session id (any string; it's hashed into the on-disk slug). |
+| `GENMEDIA_GALLERY_RETENTION_DAYS=<n>` | Prune session directories older than `n` days (default: 60). |
+
 ### `update` — Check for and apply updates
 
 ```bash

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>genmedia sessions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      {{{styles}}}
+    </style>
+  </head>
+  <body data-theme="black">
+    <div class="page">
+      <header class="header">
+        <div>
+          <div class="title-row">
+            {{{fal_icon}}}
+            <h1 class="session-title">genmedia sessions</h1>
+            <a class="powered-by" href="https://fal.ai" target="_blank" rel="noopener">powered by fal.ai</a>
+          </div>
+          <div class="meta-chips" id="header-chips"></div>
+        </div>
+        <div class="stats">
+          <div class="row">
+            <span>
+              <strong id="stat-shown">0</strong> of
+              <strong id="stat-total">0</strong> sessions
+            </span>
+          </div>
+          <div class="breakdown" id="breakdown"></div>
+        </div>
+      </header>
+
+      <div class="sessions-toolbar">
+        <div class="search">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search session id / agent"
+            autocomplete="off"
+          />
+          <span class="kbd">/</span>
+        </div>
+        <div class="sort">
+          <select id="sort-select">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="assets-desc">Most assets</option>
+            <option value="runs-desc">Most runs</option>
+          </select>
+          <svg
+            class="caret"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </div>
+
+      <main class="sessions-grid" id="sessions-grid"></main>
+
+      <footer class="page-footer">
+        <a href="https://genmedia.sh" target="_blank" rel="noopener">genmedia.sh</a>
+        <span class="sep">·</span>
+        <span class="mono version">v{{version}}</span>
+      </footer>
+    </div>
+
+    <script id="genmedia-data" type="application/json">{{{data}}}</script>
+    <script>
+      {{{shared_script}}}
+    </script>
+    <script>
+      {{{page_script}}}
+    </script>
+  </body>
+</html>

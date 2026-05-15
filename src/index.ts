@@ -28,6 +28,7 @@ const KNOWN_COMMANDS = new Set([
   "upload",
   "pricing",
   "docs",
+  "gallery",
   "version",
   "update",
 ]);
@@ -121,6 +122,10 @@ async function startCli(): Promise<void> {
             "--help":
               "Introspect the model and render its input schema as CLI help",
           },
+          output_fields: {
+            gallery:
+              "On success, a `{ session_id, path, url }` pointing at a per-session static HTML gallery aggregating every asset generated in this agent session. Disable via GENMEDIA_NO_GALLERY=1.",
+          },
         },
         upload: {
           description: "Upload a local file or URL to fal.ai CDN",
@@ -139,6 +144,10 @@ async function startCli(): Promise<void> {
             "--download":
               "Download media from the result (implies --result). Optional value is a path or template with {index}, {name}, {ext}, {request_id}",
           },
+          output_fields: {
+            gallery:
+              "When --result returns media, a `{ session_id, path, url }` pointing at the per-session static HTML gallery. Disable via GENMEDIA_NO_GALLERY=1.",
+          },
         },
         pricing: {
           description: "Get pricing information for a model",
@@ -150,6 +159,27 @@ async function startCli(): Promise<void> {
             "Search fal.ai documentation, guides, and API references",
           usage: "genmedia docs <query>",
           args: "<query>",
+        },
+        gallery: {
+          description:
+            "Show or manage per-session HTML galleries of generated assets (file:// URL, no server)",
+          usage: "genmedia gallery [subcommand] [target] [flags]",
+          subcommands: {
+            "(none)":
+              "Print current session info (path, url, exists). Never opens a browser, never deletes.",
+            open: 'genmedia gallery open [<target>] [--print] — no target opens the all-sessions index. Targets: "current", "latest", or <session_id>. Pass --print to resolve path/url without launching the browser.',
+            list: "genmedia gallery list [--limit <n>] — list recorded sessions, newest first. (default limit: 50)",
+            clear:
+              'genmedia gallery clear [<target>] --yes — target = "current" (default) | "latest" | "all" | <session_id>. --yes is REQUIRED; no interactive prompt.',
+          },
+          env: {
+            GENMEDIA_NO_GALLERY:
+              "Set to 1 to disable gallery recording. Reads (list/open/clear) still work so prior galleries remain inspectable.",
+            GENMEDIA_SESSION_ID:
+              "Force a specific session id (overrides agent / terminal detection)",
+            GENMEDIA_GALLERY_RETENTION_DAYS:
+              "Prune session directories older than N days (default: 60)",
+          },
         },
         version: {
           description: "Show version and check for updates",
@@ -260,6 +290,7 @@ async function startCli(): Promise<void> {
       upload: () => import("./commands/upload").then((m) => m.default),
       pricing: () => import("./commands/pricing").then((m) => m.default),
       docs: () => import("./commands/docs").then((m) => m.default),
+      gallery: () => import("./commands/gallery/index").then((m) => m.default),
       version: () => import("./commands/version").then((m) => m.default),
       update: () => import("./commands/update").then((m) => m.default),
     },

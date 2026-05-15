@@ -12,6 +12,7 @@ import {
   parseDownloadFlag,
 } from "../lib/download";
 import { formatApiError } from "../lib/error-format";
+import { buildGalleryFiles, recordRun } from "../lib/gallery";
 import { classifyModality, type Modality } from "../lib/modality";
 import { error, isPrettyOutput, output } from "../lib/output";
 import { parseValue } from "../lib/parse-value";
@@ -228,18 +229,21 @@ export default defineCommand({
       });
 
       requestId = result.requestId;
+      const durationMs = Math.round(performance.now() - modelStart);
       track("model_run", {
         endpointId,
         mode: "subscribe",
         ok: true,
-        durationMs: Math.round(performance.now() - modelStart),
+        durationMs,
         ...trackingMode,
       });
       spinner?.succeed(`Run completed (${result.requestId})`);
 
+      const mediaRefs = extractMediaRefs(result.data);
+
       let downloaded: Awaited<ReturnType<typeof downloadMedia>> | undefined;
       if (download.mode === "on") {
-        const refs = extractMediaRefs(result.data);
+        const refs = mediaRefs;
         if (refs.length > 0) {
           const spinnerDl = prettyMode
             ? createSpinner(`Downloading ${refs.length} file(s)`)
@@ -268,6 +272,17 @@ export default defineCommand({
         }
       }
 
+      const galleryPaths = recordRun({
+        ts: Date.now(),
+        request_id: result.requestId,
+        endpoint_id: endpointId,
+        modality: routed?.modality ?? null,
+        prompt:
+          typeof input.prompt === "string" ? (input.prompt as string) : null,
+        duration_ms: durationMs,
+        files: buildGalleryFiles(mediaRefs, downloaded?.downloaded ?? []),
+      });
+
       output(
         {
           status: "completed",
@@ -278,6 +293,15 @@ export default defineCommand({
           ...(downloaded ? { downloaded_files: downloaded.downloaded } : {}),
           ...(downloaded && downloaded.failed.length > 0
             ? { download_failures: downloaded.failed }
+            : {}),
+          ...(galleryPaths
+            ? {
+                gallery: {
+                  session_id: galleryPaths.session_id,
+                  path: galleryPaths.index_path,
+                  url: galleryPaths.index_url,
+                },
+              }
             : {}),
           ...(logs.length > 0 ? { logs } : {}),
         },

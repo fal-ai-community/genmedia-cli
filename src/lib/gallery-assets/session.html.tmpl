@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      {{{styles}}}
+    </style>
+  </head>
+  <body data-theme="black">
+    <div class="page">
+      <header class="header">
+        <div>
+          <div class="title-row">
+            {{{fal_icon}}}
+            <h1 class="session-title">genmedia session</h1>
+            <a class="powered-by" href="https://fal.ai" target="_blank" rel="noopener">powered by fal.ai</a>
+          </div>
+          <div class="meta-chips" id="header-chips"></div>
+        </div>
+        <div class="stats">
+          <div class="row">
+            <span>
+              <strong id="stat-shown">0</strong> of
+              <strong id="stat-total">0</strong> assets
+            </span>
+          </div>
+          <div class="breakdown" id="breakdown"></div>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <div class="filter-chips" id="filters"></div>
+
+        <div class="search">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search prompts / endpoints / files"
+            autocomplete="off"
+          />
+          <span class="kbd">/</span>
+        </div>
+
+        <div class="sort">
+          <select id="sort-select">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="size-desc">Largest first</option>
+            <option value="size-asc">Smallest first</option>
+            <option value="endpoint">By endpoint</option>
+          </select>
+          <svg
+            class="caret"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </div>
+
+      <main class="grid" id="grid"></main>
+
+      <footer class="page-footer">
+        <a href="https://genmedia.sh" target="_blank" rel="noopener">genmedia.sh</a>
+        <span class="sep">·</span>
+        <span class="mono version">v{{version}}</span>
+      </footer>
+    </div>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Asset detail">
+      <button class="lb-close" id="lb-close" aria-label="Close">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+      <button class="lb-nav prev" id="lb-prev" aria-label="Previous">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      <button class="lb-nav next" id="lb-next" aria-label="Next">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+
+      <div class="lb-stage">
+        <div class="lb-preview" id="lb-preview"></div>
+        <aside class="lb-meta" id="lb-meta"></aside>
+      </div>
+    </div>
+
+    <button class="tweaks-btn" id="tweaks-btn" aria-label="Tweaks" hidden>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+        />
+      </svg>
+    </button>
+
+    <div class="tweaks" id="tweaks" role="dialog" aria-label="Tweaks">
+      <div class="tw-header">
+        <span>Tweaks</span>
+        <button class="tw-close" id="tw-close" aria-label="Close">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="tw-row">
+        <span class="tw-label">Columns</span>
+        <div class="tw-seg" id="tw-cols">
+          <button data-v="3">3</button>
+          <button data-v="4" aria-pressed="true">4</button>
+          <button data-v="5">5</button>
+        </div>
+      </div>
+
+      <div class="tw-row">
+        <span class="tw-label">Theme</span>
+        <div class="tw-swatches" id="tw-theme">
+          <button class="tw-swatch" data-v="black" aria-pressed="true" style="background:#000;border-color:#222;"></button>
+          <button class="tw-swatch" data-v="default" style="background:#0a0a0c;border-color:#222;"></button>
+          <button class="tw-swatch" data-v="fal" style="background:#121216;border-color:#27272a;"></button>
+          <button class="tw-swatch" data-v="paper" style="background:#f7f7f5;"></button>
+        </div>
+      </div>
+
+      <div class="tw-row">
+        <span class="tw-label">Card density</span>
+        <div class="tw-seg" id="tw-density">
+          <button data-v="comfortable" aria-pressed="true">Comfortable</button>
+          <button data-v="compact">Compact</button>
+        </div>
+      </div>
+
+      <div class="tw-row">
+        <label class="tw-toggle">
+          <span>Show file actions</span>
+          <input type="checkbox" id="tw-actions" checked />
+        </label>
+      </div>
+    </div>
+
+    <script id="genmedia-data" type="application/json">{{{data}}}</script>
+    <script>
+      {{{shared_script}}}
+    </script>
+    <script>
+      {{{page_script}}}
+    </script>
+  </body>
+</html>
