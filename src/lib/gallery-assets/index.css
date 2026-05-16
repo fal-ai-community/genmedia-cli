@@ -142,6 +142,15 @@
   font-weight: 600;
   color: var(--fg);
   letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sc-subid {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-subtle);
+  margin-top: -8px;
 }
 
 .sc-summary {

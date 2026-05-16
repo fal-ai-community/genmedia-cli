@@ -15,6 +15,7 @@ export default defineCommand({
     info: () => import("./info").then((m) => m.default),
     open: () => import("./open").then((m) => m.default),
     list: () => import("./list").then((m) => m.default),
+    rename: () => import("./rename").then((m) => m.default),
     clear: () => import("./clear").then((m) => m.default),
   },
 });

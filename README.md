@@ -176,6 +176,9 @@ genmedia gallery open <session_id>        # open a specific session
 genmedia gallery open latest --print      # resolve path/url without launching the browser
 genmedia gallery list                     # list every recorded session (newest first, JSON-friendly)
 genmedia gallery list --limit 10          # cap the list (default: 50)
+genmedia gallery rename --label "demo run"        # rename the current session (cosmetic — id stays the same)
+genmedia gallery rename latest --label "x"        # rename the most-recent session
+genmedia gallery rename <session_id> --clear      # remove a session's label
 genmedia gallery clear --yes              # delete the current session (--yes is required)
 genmedia gallery clear latest --yes       # delete the most-recently recorded session
 genmedia gallery clear <session_id> --yes # delete a specific session

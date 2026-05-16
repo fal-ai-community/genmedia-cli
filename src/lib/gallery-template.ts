@@ -66,6 +66,9 @@ export interface SessionPayload {
   cwd: string | null;
   started_at: number;
   updated_at: number;
+  // Optional user-set display name. Cosmetic only — the on-disk id stays
+  // anchored to the process-tree resolver so future runs still land here.
+  label?: string;
   runs: RunRecord[];
 }
 
@@ -79,6 +82,7 @@ export interface SessionPreview {
 
 export interface SessionSummary {
   session_id: string;
+  label: string | null;
   agent: string | null;
   agent_host: string | null;
   started_at: number;

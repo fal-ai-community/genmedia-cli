@@ -140,6 +140,11 @@
 
   /* ---------- Header --------------------------------------------------- */
   function renderHeaderChips() {
+    // Promote the user-set label into the page title when present.
+    const titleEl = document.querySelector(".session-title");
+    if (titleEl && DATA.label) titleEl.textContent = DATA.label;
+    if (DATA.label) document.title = DATA.label;
+
     const chips = document.getElementById("header-chips");
     if (!chips) return;
     const parts = [];

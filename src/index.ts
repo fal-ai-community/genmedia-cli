@@ -170,6 +170,8 @@ async function startCli(): Promise<void> {
             info: "genmedia gallery info — print the full info payload (session id, path, url, exists, latest pointer) regardless of TTY.",
             open: 'genmedia gallery open [<target>] [--print] — no target opens the all-sessions index. Targets: "current", "latest", or <session_id>. Pass --print to resolve path/url without launching the browser.',
             list: "genmedia gallery list [--limit <n>] — list recorded sessions, newest first. (default limit: 50)",
+            rename:
+              'genmedia gallery rename [<target>] --label "<name>" | --clear — set or remove a display label. Target = "current" (default) | "latest" | <session_id>. The on-disk session id is unchanged.',
             clear:
               'genmedia gallery clear [<target>] --yes — target = "current" (default) | "latest" | "all" | <session_id>. --yes is REQUIRED; no interactive prompt.',
           },

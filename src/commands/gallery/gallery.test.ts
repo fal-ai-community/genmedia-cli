@@ -6,12 +6,14 @@ import {
   clearGallery,
   galleryDir,
   galleryPaths,
+  LABEL_MAX_LENGTH,
   listSessions,
   type RecordRunInput,
   readLastSession,
   recordRun,
   regenerateRootIndexHtml,
   regenerateSessionHtml,
+  renameSession,
   resolveLatestSessionId,
   rootIndexPath,
   rootIndexUrl,
@@ -285,6 +287,42 @@ describe("gallery storage (redirected root)", () => {
       "audio",
     ]);
     expect(previews.every((p) => !p.url.endsWith(".glb"))).toBe(true);
+  });
+
+  test("renameSession sets, trims, clears, and exposes label via listSessions", () => {
+    const paths = recordRun(makeRun("a"));
+    const id = paths?.session_id ?? "";
+
+    // Set
+    const ok = renameSession(id, "  fluffy dog batch  ");
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.label).toBe("fluffy dog batch");
+    expect(listSessions()[0].label).toBe("fluffy dog batch");
+
+    // Clear via null
+    const cleared = renameSession(id, null);
+    expect(cleared.ok).toBe(true);
+    if (cleared.ok) expect(cleared.label).toBeNull();
+    expect(listSessions()[0].label).toBeNull();
+
+    // Clear via empty string
+    renameSession(id, "x");
+    const cleared2 = renameSession(id, "   ");
+    expect(cleared2.ok).toBe(true);
+    if (cleared2.ok) expect(cleared2.label).toBeNull();
+  });
+
+  test("renameSession rejects too-long labels and unknown ids", () => {
+    const paths = recordRun(makeRun("a"));
+    const id = paths?.session_id ?? "";
+
+    const tooLong = renameSession(id, "x".repeat(LABEL_MAX_LENGTH + 1));
+    expect(tooLong.ok).toBe(false);
+    if (!tooLong.ok) expect(tooLong.reason).toBe("too-long");
+
+    const missing = renameSession("does-not-exist", "anything");
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.reason).toBe("not-found");
   });
 
   test("GENMEDIA_NO_GALLERY blocks writes but not reads/clears", () => {

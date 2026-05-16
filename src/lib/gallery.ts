@@ -56,6 +56,7 @@ const DATA_FILE = "data.json";
 const PAGE_FILE = "index.html";
 const MAX_RUNS_PER_SESSION = 1000;
 const MAX_SESSION_PREVIEWS = 4;
+const MAX_LABEL_LENGTH = 80;
 const DEFAULT_RETENTION_DAYS = 60;
 
 export interface GalleryPaths {
@@ -274,6 +275,7 @@ function summarize(payload: SessionPayload): SessionSummary {
   }
   return {
     session_id: payload.session_id,
+    label: payload.label ?? null,
     agent: payload.agent,
     agent_host: payload.agent_host,
     started_at: payload.started_at,
@@ -423,6 +425,40 @@ export function recordRun(input: RecordRunInput): GalleryPaths | null {
     return null;
   }
 }
+
+export type RenameResult =
+  | { ok: true; label: string | null }
+  | { ok: false; reason: "not-found" | "too-long" | "write-failed" };
+
+// Sets or clears the cosmetic display label for a session. The on-disk id
+// stays anchored to the process-tree resolver so future runs still write
+// here — labels are an overlay, not a rename.
+export function renameSession(
+  sessionId: string,
+  rawLabel: string | null,
+): RenameResult {
+  const paths = galleryPaths(sessionId);
+  const payload = readSessionPayload(paths);
+  if (!payload) return { ok: false, reason: "not-found" };
+  const trimmed = rawLabel === null ? null : rawLabel.trim();
+  if (trimmed !== null && trimmed.length > MAX_LABEL_LENGTH) {
+    return { ok: false, reason: "too-long" };
+  }
+  if (trimmed === null || trimmed === "") {
+    delete payload.label;
+  } else {
+    payload.label = trimmed;
+  }
+  try {
+    writeSessionPayload(paths, payload);
+    regenerateRootIndexHtml();
+    return { ok: true, label: payload.label ?? null };
+  } catch {
+    return { ok: false, reason: "write-failed" };
+  }
+}
+
+export const LABEL_MAX_LENGTH = MAX_LABEL_LENGTH;
 
 export interface ClearOptions {
   sessionId?: string;
