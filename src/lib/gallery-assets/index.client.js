@@ -179,12 +179,7 @@
       const t = order[j];
       if (!total[t]) continue;
       const c = (H.TYPE_INFO[t] || H.TYPE_INFO.other).color;
-      html +=
-        '<span class="b"><span class="sw" style="background:' +
-        c +
-        '"></span>' +
-        H.typeLabel(t, total[t]) +
-        "</span>";
+      html += `<span class="b" style="color:${c}" title="${H.escapeHtml(H.typeLabel(t, total[t]))}">${H.iconForKind(t, 12)}<span class="bn">${total[t]}</span></span>`;
     }
     root.innerHTML = html;
   }
