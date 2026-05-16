@@ -146,18 +146,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sc-subid {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--fg-subtle);
-  margin-top: -8px;
-}
 
 .sc-summary {
   font-size: 13.5px;
   line-height: 1.45;
   color: var(--fg-muted);
   margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sc-summary .sc-totals {
+  min-width: 0;
 }
 .sc-summary strong {
   color: var(--fg);
@@ -168,10 +170,24 @@
   color: var(--fg-faint);
   margin: 0 4px;
 }
-.sc-summary .breakdown {
-  color: var(--fg-subtle);
-  font-family: var(--font-mono);
+.sc-summary .breakdown-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+.sc-summary .bi {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 12px;
+}
+.sc-summary .bi svg {
+  display: block;
+}
+.sc-summary .bi .bn {
+  color: var(--fg-muted);
 }
 
 .sc-typebar {

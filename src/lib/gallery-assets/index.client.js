@@ -194,10 +194,12 @@
     el.className = `session-card${s.live ? " live" : ""}`;
     el.href = `./sessions/${encodeURIComponent(s.session_id)}/index.html`;
 
-    const agent = s.agent || "unknown agent";
+    const agentChip = s.agent
+      ? `<span class="chip">${H.escapeHtml(s.agent)}</span>`
+      : "";
 
     const segs = [];
-    const breakdownLabels = [];
+    const breakdownIcons = [];
     const entries = Object.keys(s.breakdown || {})
       .map((k) => [k, s.breakdown[k]])
       .filter((e) => e[1] > 0)
@@ -205,9 +207,11 @@
     for (let i = 0; i < entries.length; i++) {
       const k = entries[i][0];
       const n = entries[i][1];
-      const c = (H.TYPE_INFO[k] || H.TYPE_INFO.other).color;
-      segs.push(`<span style="background:${c}; flex:${n}"></span>`);
-      breakdownLabels.push(H.typeLabel(k, n));
+      const info = H.TYPE_INFO[k] || H.TYPE_INFO.other;
+      segs.push(`<span style="background:${info.color}; flex:${n}"></span>`);
+      breakdownIcons.push(
+        `<span class="bi" style="color:${info.color}" title="${H.escapeHtml(H.typeLabel(k, n))}">${H.iconForKind(k, 12)}<span class="bn">${n}</span></span>`,
+      );
     }
 
     let thumbsHtml = "";
@@ -257,27 +261,14 @@
     }
 
     const titleText = s.label || s.session_id;
-    const subId = s.label
-      ? `<div class="sc-subid">${H.escapeHtml(s.session_id)}</div>`
-      : "";
     const idTitleAttr = s.label ? ` title="${H.escapeHtml(s.session_id)}"` : "";
     el.innerHTML =
-      `<div class="sc-top"><span class="sc-id"${idTitleAttr}>${H.escapeHtml(titleText)}</span><span class="chip">${H.escapeHtml(agent)}</span></div>` +
-      subId +
+      `<div class="sc-top"><span class="sc-id"${idTitleAttr}>${H.escapeHtml(titleText)}</span>${agentChip}</div>` +
       thumbsHtml +
       '<p class="sc-summary">' +
-      "<strong>" +
-      s.assets +
-      "</strong> " +
-      (s.assets === 1 ? "asset" : "assets") +
-      " across <strong>" +
-      s.runs +
-      "</strong> " +
-      (s.runs === 1 ? "run" : "runs") +
-      (breakdownLabels.length
-        ? '<span class="sep">\u00B7</span><span class="breakdown">' +
-          H.escapeHtml(breakdownLabels.join(", ")) +
-          "</span>"
+      `<span class="sc-totals"><strong>${s.assets}</strong> ${s.assets === 1 ? "asset" : "assets"} across <strong>${s.runs}</strong> ${s.runs === 1 ? "run" : "runs"}</span>` +
+      (breakdownIcons.length
+        ? `<span class="breakdown-icons">${breakdownIcons.join("")}</span>`
         : "") +
       "</p>" +
       '<div class="sc-typebar">' +
