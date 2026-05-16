@@ -265,10 +265,7 @@ function summarize(payload: SessionPayload): SessionSummary {
     for (const f of r.files) {
       kindCounts[f.kind] = (kindCounts[f.kind] ?? 0) + 1;
       assetCount += 1;
-      if (
-        (f.kind === "image" || f.kind === "video" || f.kind === "audio") &&
-        previews.length < MAX_SESSION_PREVIEWS
-      ) {
+      if (previews.length < MAX_SESSION_PREVIEWS) {
         previews.push({ kind: f.kind, file: f.path, url: f.url });
       }
     }

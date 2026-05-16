@@ -72,10 +72,10 @@ export interface SessionPayload {
   runs: RunRecord[];
 }
 
-// image/video render real media; audio shows a synthetic waveform.
-// 3d/other are skipped — no meaningful compact thumbnail.
+// image/video render real media; audio = synthetic waveform; 3d/other =
+// kind-icon placeholder. All counted toward the 4-slot cap (FIFO).
 export interface SessionPreview {
-  kind: "image" | "video" | "audio";
+  kind: "image" | "video" | "audio" | "model" | "other";
   file: string | null;
   url: string;
 }

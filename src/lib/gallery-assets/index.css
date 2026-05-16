@@ -95,6 +95,14 @@
   object-fit: cover;
   display: block;
 }
+.sc-thumbs .thumb .thumb-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.55;
+}
 .sc-thumbs .thumb .audio-thumb {
   position: absolute;
   inset: 0;
@@ -137,7 +145,7 @@
   transform: scale(1.06);
 }
 .sc-id {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 600;
   color: var(--fg);
@@ -145,6 +153,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.sc-id.mono {
+  font-family: var(--font-mono);
 }
 
 .sc-summary {

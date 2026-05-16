@@ -220,38 +220,29 @@
       for (let i = 0; i < s.previews.length; i++) {
         const p = s.previews[i];
         const src = H.preferredSrc(p);
-        if (!src) continue;
         const safeSrc = H.escapeHtml(src);
-        // First-frame trick: preload only metadata + seek to 0.1s so the
-        // browser paints a static poster without streaming the whole file.
         let media;
-        if (p.kind === "video") {
-          media =
-            '<video preload="metadata" muted playsinline src="' +
-            safeSrc +
-            '#t=0.1"></video><span class="play-badge"><span class="disc">' +
-            H.svgPlay(16) +
-            "</span></span>";
+        if (p.kind === "video" && src) {
+          // First-frame trick: preload only metadata + seek to 0.1s so the
+          // browser paints a static poster without streaming the whole file.
+          media = `<video preload="metadata" muted playsinline src="${safeSrc}#t=0.1"></video><span class="play-badge"><span class="disc">${H.svgPlay(16)}</span></span>`;
         } else if (p.kind === "audio") {
-          // Synthetic waveform (no audio decode) — keyed off the URL so the
-          // shape is stable across renders. Real playback is on the session
-          // page; the index thumb is decorative.
+          // Synthetic waveform — deterministic seed off the URL.
           const bars = H.generateWaveform(p.url || p.file || "", 18, 0.55);
           let barsHtml = "";
           for (let b = 0; b < bars.length; b++) {
-            barsHtml +=
-              '<span class="bar" style="height:' +
-              Math.max(12, bars[b] * 100) +
-              '%"></span>';
+            barsHtml += `<span class="bar" style="height:${Math.max(12, bars[b] * 100)}%"></span>`;
           }
-          media =
-            '<div class="audio-thumb">' +
-            barsHtml +
-            '</div><span class="play-badge"><span class="disc">' +
-            H.svgPlay(16) +
-            "</span></span>";
-        } else {
+          media = `<div class="audio-thumb">${barsHtml}</div><span class="play-badge"><span class="disc">${H.svgPlay(16)}</span></span>`;
+        } else if (p.kind === "image" && src) {
           media = `<img src="${safeSrc}" alt="" loading="lazy" />`;
+        } else if (p.kind === "model" || p.kind === "other") {
+          // No meaningful media — render the kind icon as a faded placeholder.
+          const info = H.TYPE_INFO[p.kind] || H.TYPE_INFO.other;
+          media = `<div class="thumb-icon" style="color:${info.color}">${H.iconForKind(p.kind, 36)}</div>`;
+        } else {
+          // Unknown kind or missing src — skip.
+          continue;
         }
         items.push(`<span class="thumb">${media}</span>`);
       }
@@ -261,9 +252,10 @@
     }
 
     const titleText = s.label || s.session_id;
+    const idClass = s.label ? "sc-id" : "sc-id mono";
     const idTitleAttr = s.label ? ` title="${H.escapeHtml(s.session_id)}"` : "";
     el.innerHTML =
-      `<div class="sc-top"><span class="sc-id"${idTitleAttr}>${H.escapeHtml(titleText)}</span>${agentChip}</div>` +
+      `<div class="sc-top"><span class="${idClass}"${idTitleAttr}>${H.escapeHtml(titleText)}</span>${agentChip}</div>` +
       thumbsHtml +
       '<p class="sc-summary">' +
       `<span class="sc-totals"><strong>${s.assets}</strong> ${s.assets === 1 ? "asset" : "assets"} across <strong>${s.runs}</strong> ${s.runs === 1 ? "run" : "runs"}</span>` +

@@ -219,11 +219,10 @@ describe("gallery storage (redirected root)", () => {
     expect(fresh).toContain('id="sessions-grid"');
   });
 
-  test("listSessions previews mix image/video/audio, capped at 4, excludes 3d/other", () => {
-    // 2 images, 1 video, 1 audio, 2 more images, 1 model. previews
-    // should be FIFO across image+video+audio, model skipped, capped at 4.
+  test("listSessions previews include all kinds FIFO, capped at 4", () => {
+    // image, video, audio, model (in that order). All four kinds fit in
+    // the 4-slot cap and appear in chronological FIFO order.
     recordRun(makeRun("img-a"));
-    recordRun(makeRun("img-b"));
     recordRun({
       ts: Date.now(),
       request_id: "vid-1",
@@ -258,8 +257,6 @@ describe("gallery storage (redirected root)", () => {
         },
       ],
     });
-    recordRun(makeRun("img-c")); // pushes over the 4-cap
-    recordRun(makeRun("img-d"));
     recordRun({
       ts: Date.now(),
       request_id: "model-1",
@@ -277,16 +274,21 @@ describe("gallery storage (redirected root)", () => {
         },
       ],
     });
+    recordRun(makeRun("img-b")); // would be 5th — capped out
 
     const previews = listSessions()[0].previews;
     expect(previews.length).toBe(4);
     expect(previews.map((p) => p.kind)).toEqual([
       "image",
-      "image",
       "video",
       "audio",
+      "model",
     ]);
-    expect(previews.every((p) => !p.url.endsWith(".glb"))).toBe(true);
+    expect(previews[3]).toEqual({
+      kind: "model",
+      file: null,
+      url: "https://cdn.example.com/asset.glb",
+    });
   });
 
   test("renameSession sets, trims, clears, and exposes label via listSessions", () => {
