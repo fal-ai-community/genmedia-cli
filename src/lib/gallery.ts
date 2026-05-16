@@ -55,6 +55,7 @@ function lastSessionPath(): string {
 const DATA_FILE = "data.json";
 const PAGE_FILE = "index.html";
 const MAX_RUNS_PER_SESSION = 1000;
+const MAX_SESSION_PREVIEWS = 4;
 const DEFAULT_RETENTION_DAYS = 60;
 
 export interface GalleryPaths {
@@ -257,11 +258,18 @@ function summarize(payload: SessionPayload): SessionSummary {
   };
   let assetCount = 0;
   const modalities = new Set<string>();
+  const previews: SessionSummary["previews"] = [];
   for (const r of payload.runs) {
     if (r.modality) modalities.add(r.modality);
     for (const f of r.files) {
       kindCounts[f.kind] = (kindCounts[f.kind] ?? 0) + 1;
       assetCount += 1;
+      if (
+        (f.kind === "image" || f.kind === "video" || f.kind === "audio") &&
+        previews.length < MAX_SESSION_PREVIEWS
+      ) {
+        previews.push({ kind: f.kind, file: f.path, url: f.url });
+      }
     }
   }
   return {
@@ -274,6 +282,7 @@ function summarize(payload: SessionPayload): SessionSummary {
     asset_count: assetCount,
     kind_counts: kindCounts,
     modalities: Array.from(modalities),
+    previews,
   };
 }
 

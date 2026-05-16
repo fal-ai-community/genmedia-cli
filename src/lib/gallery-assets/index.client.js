@@ -21,6 +21,7 @@
       assets: assets,
       breakdown: kinds,
       modalities: s.modalities || [],
+      previews: Array.isArray(s.previews) ? s.previews : [],
       live: isLive(s.updated_at),
     };
   }
@@ -209,6 +210,52 @@
       breakdownLabels.push(H.typeLabel(k, n));
     }
 
+    let thumbsHtml = "";
+    if (s.previews && s.previews.length) {
+      const items = [];
+      for (let i = 0; i < s.previews.length; i++) {
+        const p = s.previews[i];
+        const src = H.preferredSrc(p);
+        if (!src) continue;
+        const safeSrc = H.escapeHtml(src);
+        // First-frame trick: preload only metadata + seek to 0.1s so the
+        // browser paints a static poster without streaming the whole file.
+        let media;
+        if (p.kind === "video") {
+          media =
+            '<video preload="metadata" muted playsinline src="' +
+            safeSrc +
+            '#t=0.1"></video><span class="play-badge"><span class="disc">' +
+            H.svgPlay(16) +
+            "</span></span>";
+        } else if (p.kind === "audio") {
+          // Synthetic waveform (no audio decode) — keyed off the URL so the
+          // shape is stable across renders. Real playback is on the session
+          // page; the index thumb is decorative.
+          const bars = H.generateWaveform(p.url || p.file || "", 18, 0.55);
+          let barsHtml = "";
+          for (let b = 0; b < bars.length; b++) {
+            barsHtml +=
+              '<span class="bar" style="height:' +
+              Math.max(12, bars[b] * 100) +
+              '%"></span>';
+          }
+          media =
+            '<div class="audio-thumb">' +
+            barsHtml +
+            '</div><span class="play-badge"><span class="disc">' +
+            H.svgPlay(16) +
+            "</span></span>";
+        } else {
+          media = '<img src="' + safeSrc + '" alt="" loading="lazy" />';
+        }
+        items.push('<span class="thumb">' + media + "</span>");
+      }
+      if (items.length) {
+        thumbsHtml = '<div class="sc-thumbs">' + items.join("") + "</div>";
+      }
+    }
+
     el.innerHTML =
       '<div class="sc-top">' +
       '<span class="sc-id">' +
@@ -218,6 +265,7 @@
       H.escapeHtml(agent) +
       "</span>" +
       "</div>" +
+      thumbsHtml +
       '<p class="sc-summary">' +
       "<strong>" +
       s.assets +

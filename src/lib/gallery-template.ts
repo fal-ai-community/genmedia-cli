@@ -69,6 +69,14 @@ export interface SessionPayload {
   runs: RunRecord[];
 }
 
+// image/video render real media; audio shows a synthetic waveform.
+// 3d/other are skipped — no meaningful compact thumbnail.
+export interface SessionPreview {
+  kind: "image" | "video" | "audio";
+  file: string | null;
+  url: string;
+}
+
 export interface SessionSummary {
   session_id: string;
   agent: string | null;
@@ -79,6 +87,7 @@ export interface SessionSummary {
   asset_count: number;
   kind_counts: Record<AssetKind, number>;
   modalities: string[];
+  previews: SessionPreview[];
 }
 
 const HTML_ESCAPE_RE = /[&<>"']/g;

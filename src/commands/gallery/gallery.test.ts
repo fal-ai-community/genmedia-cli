@@ -7,6 +7,7 @@ import {
   galleryDir,
   galleryPaths,
   listSessions,
+  type RecordRunInput,
   readLastSession,
   recordRun,
   regenerateRootIndexHtml,
@@ -33,7 +34,7 @@ function fakeCtx(overrides: Partial<SessionContext> = {}): SessionContext {
   };
 }
 
-function makeRun(suffix = "1") {
+function makeRun(suffix = "1"): RecordRunInput {
   return {
     ts: Date.now(),
     request_id: `req-${suffix}`,
@@ -46,7 +47,7 @@ function makeRun(suffix = "1") {
         path: null,
         url: `https://cdn.example.com/${suffix}.png`,
         size_bytes: null,
-        kind: "image" as const,
+        kind: "image",
         json_path: `images[${suffix}]`,
       },
     ],
@@ -214,6 +215,76 @@ describe("gallery storage (redirected root)", () => {
     const fresh = readFileSync(rootIndexPath(), "utf-8");
     expect(fresh).toStartWith("<!doctype html>");
     expect(fresh).toContain('id="sessions-grid"');
+  });
+
+  test("listSessions previews mix image/video/audio, capped at 4, excludes 3d/other", () => {
+    // 2 images, 1 video, 1 audio, 2 more images, 1 model. previews
+    // should be FIFO across image+video+audio, model skipped, capped at 4.
+    recordRun(makeRun("img-a"));
+    recordRun(makeRun("img-b"));
+    recordRun({
+      ts: Date.now(),
+      request_id: "vid-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: "/tmp/clip.mp4",
+          url: "https://cdn.example.com/clip.mp4",
+          size_bytes: null,
+          kind: "video",
+          json_path: "video",
+        },
+      ],
+    });
+    recordRun({
+      ts: Date.now(),
+      request_id: "audio-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: null,
+          url: "https://cdn.example.com/voice.mp3",
+          size_bytes: null,
+          kind: "audio",
+          json_path: "audio[0]",
+        },
+      ],
+    });
+    recordRun(makeRun("img-c")); // pushes over the 4-cap
+    recordRun(makeRun("img-d"));
+    recordRun({
+      ts: Date.now(),
+      request_id: "model-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: null,
+          url: "https://cdn.example.com/asset.glb",
+          size_bytes: null,
+          kind: "model",
+          json_path: "model",
+        },
+      ],
+    });
+
+    const previews = listSessions()[0].previews;
+    expect(previews.length).toBe(4);
+    expect(previews.map((p) => p.kind)).toEqual([
+      "image",
+      "image",
+      "video",
+      "audio",
+    ]);
+    expect(previews.every((p) => !p.url.endsWith(".glb"))).toBe(true);
   });
 
   test("GENMEDIA_NO_GALLERY blocks writes but not reads/clears", () => {
