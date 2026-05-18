@@ -140,6 +140,11 @@
 
   /* ---------- Header --------------------------------------------------- */
   function renderHeaderChips() {
+    // Promote the user-set label into the page title when present.
+    const titleEl = document.querySelector(".session-title");
+    if (titleEl && DATA.label) titleEl.textContent = DATA.label;
+    if (DATA.label) document.title = DATA.label;
+
     const chips = document.getElementById("header-chips");
     if (!chips) return;
     const parts = [];
@@ -239,12 +244,7 @@
       const t = order[i];
       if (!counts[t]) continue;
       const c = (H.TYPE_INFO[t] || H.TYPE_INFO.other).color;
-      html +=
-        '<span class="b"><span class="sw" style="background:' +
-        c +
-        '"></span>' +
-        H.typeLabel(t, counts[t]) +
-        "</span>";
+      html += `<span class="b" style="color:${c}" title="${H.escapeHtml(H.typeLabel(t, counts[t]))}">${H.iconForKind(t, 12)}<span class="bn">${counts[t]}</span></span>`;
     }
     root.innerHTML = html;
   }

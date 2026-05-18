@@ -6,11 +6,14 @@ import {
   clearGallery,
   galleryDir,
   galleryPaths,
+  LABEL_MAX_LENGTH,
   listSessions,
+  type RecordRunInput,
   readLastSession,
   recordRun,
   regenerateRootIndexHtml,
   regenerateSessionHtml,
+  renameSession,
   resolveLatestSessionId,
   rootIndexPath,
   rootIndexUrl,
@@ -33,7 +36,7 @@ function fakeCtx(overrides: Partial<SessionContext> = {}): SessionContext {
   };
 }
 
-function makeRun(suffix = "1") {
+function makeRun(suffix = "1"): RecordRunInput {
   return {
     ts: Date.now(),
     request_id: `req-${suffix}`,
@@ -46,7 +49,7 @@ function makeRun(suffix = "1") {
         path: null,
         url: `https://cdn.example.com/${suffix}.png`,
         size_bytes: null,
-        kind: "image" as const,
+        kind: "image",
         json_path: `images[${suffix}]`,
       },
     ],
@@ -214,6 +217,114 @@ describe("gallery storage (redirected root)", () => {
     const fresh = readFileSync(rootIndexPath(), "utf-8");
     expect(fresh).toStartWith("<!doctype html>");
     expect(fresh).toContain('id="sessions-grid"');
+  });
+
+  test("listSessions previews include all kinds FIFO, capped at 4", () => {
+    // image, video, audio, model (in that order). All four kinds fit in
+    // the 4-slot cap and appear in chronological FIFO order.
+    recordRun(makeRun("img-a"));
+    recordRun({
+      ts: Date.now(),
+      request_id: "vid-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: "/tmp/clip.mp4",
+          url: "https://cdn.example.com/clip.mp4",
+          size_bytes: null,
+          kind: "video",
+          json_path: "video",
+        },
+      ],
+    });
+    recordRun({
+      ts: Date.now(),
+      request_id: "audio-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: null,
+          url: "https://cdn.example.com/voice.mp3",
+          size_bytes: null,
+          kind: "audio",
+          json_path: "audio[0]",
+        },
+      ],
+    });
+    recordRun({
+      ts: Date.now(),
+      request_id: "model-1",
+      endpoint_id: "fal-ai/test",
+      modality: null,
+      prompt: null,
+      duration_ms: null,
+      files: [
+        {
+          path: null,
+          url: "https://cdn.example.com/asset.glb",
+          size_bytes: null,
+          kind: "model",
+          json_path: "model",
+        },
+      ],
+    });
+    recordRun(makeRun("img-b")); // would be 5th — capped out
+
+    const previews = listSessions()[0].previews;
+    expect(previews.length).toBe(4);
+    expect(previews.map((p) => p.kind)).toEqual([
+      "image",
+      "video",
+      "audio",
+      "model",
+    ]);
+    expect(previews[3]).toEqual({
+      kind: "model",
+      file: null,
+      url: "https://cdn.example.com/asset.glb",
+    });
+  });
+
+  test("renameSession sets, trims, clears, and exposes label via listSessions", () => {
+    const paths = recordRun(makeRun("a"));
+    const id = paths?.session_id ?? "";
+
+    // Set
+    const ok = renameSession(id, "  fluffy dog batch  ");
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.label).toBe("fluffy dog batch");
+    expect(listSessions()[0].label).toBe("fluffy dog batch");
+
+    // Clear via null
+    const cleared = renameSession(id, null);
+    expect(cleared.ok).toBe(true);
+    if (cleared.ok) expect(cleared.label).toBeNull();
+    expect(listSessions()[0].label).toBeNull();
+
+    // Clear via empty string
+    renameSession(id, "x");
+    const cleared2 = renameSession(id, "   ");
+    expect(cleared2.ok).toBe(true);
+    if (cleared2.ok) expect(cleared2.label).toBeNull();
+  });
+
+  test("renameSession rejects too-long labels and unknown ids", () => {
+    const paths = recordRun(makeRun("a"));
+    const id = paths?.session_id ?? "";
+
+    const tooLong = renameSession(id, "x".repeat(LABEL_MAX_LENGTH + 1));
+    expect(tooLong.ok).toBe(false);
+    if (!tooLong.ok) expect(tooLong.reason).toBe("too-long");
+
+    const missing = renameSession("does-not-exist", "anything");
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.reason).toBe("not-found");
   });
 
   test("GENMEDIA_NO_GALLERY blocks writes but not reads/clears", () => {

@@ -254,12 +254,14 @@ body {
 .stats .breakdown .b {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
-.stats .breakdown .sw {
-  width: 7px;
-  height: 7px;
-  border-radius: 2px;
+.stats .breakdown .b svg {
+  display: block;
+}
+.stats .breakdown .b .bn {
+  color: var(--fg-muted);
+  font-size: 12px;
 }
 
 /* ---------- Scrollbar ---------------------------------------------------- */

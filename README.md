@@ -166,8 +166,9 @@ Shows the current version and flags any known update (populated by the backgroun
 Every successful `genmedia run` (and `genmedia status --download`) records its outputs into a per-session, self-contained static HTML page under `~/.genmedia/gallery/sessions/<session_id>/index.html`. The page aggregates every image / video / audio / 3D asset produced inside one agent session — across many runs and many endpoints — into a filterable grid with a lightbox view. No server, no dependencies, opens straight from `file://`.
 
 ```bash
-genmedia gallery                          # print { session_id, path, url } for the current session
-genmedia gallery info                     # same as above (explicit form)
+genmedia gallery                          # pretty TTY: prints `→ Open: <url>`. JSON / non-TTY: full info payload.
+genmedia gallery --json                   # structured info payload, agent-safe
+genmedia gallery info                     # full info payload, even from a TTY (devs)
 genmedia gallery open                     # open the all-sessions index in the default browser
 genmedia gallery open current             # open the current session
 genmedia gallery open latest              # open the most-recently recorded session (works across shells)
@@ -175,6 +176,9 @@ genmedia gallery open <session_id>        # open a specific session
 genmedia gallery open latest --print      # resolve path/url without launching the browser
 genmedia gallery list                     # list every recorded session (newest first, JSON-friendly)
 genmedia gallery list --limit 10          # cap the list (default: 50)
+genmedia gallery rename --label "demo run"        # rename the current session (cosmetic — id stays the same)
+genmedia gallery rename latest --label "x"        # rename the most-recent session
+genmedia gallery rename <session_id> --clear      # remove a session's label
 genmedia gallery clear --yes              # delete the current session (--yes is required)
 genmedia gallery clear latest --yes       # delete the most-recently recorded session
 genmedia gallery clear <session_id> --yes # delete a specific session

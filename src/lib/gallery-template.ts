@@ -66,11 +66,23 @@ export interface SessionPayload {
   cwd: string | null;
   started_at: number;
   updated_at: number;
+  // Optional user-set display name. Cosmetic only — the on-disk id stays
+  // anchored to the process-tree resolver so future runs still land here.
+  label?: string;
   runs: RunRecord[];
+}
+
+// image/video render real media; audio = synthetic waveform; 3d/other =
+// kind-icon placeholder. All counted toward the 4-slot cap (FIFO).
+export interface SessionPreview {
+  kind: "image" | "video" | "audio" | "model" | "other";
+  file: string | null;
+  url: string;
 }
 
 export interface SessionSummary {
   session_id: string;
+  label: string | null;
   agent: string | null;
   agent_host: string | null;
   started_at: number;
@@ -79,6 +91,7 @@ export interface SessionSummary {
   asset_count: number;
   kind_counts: Record<AssetKind, number>;
   modalities: string[];
+  previews: SessionPreview[];
 }
 
 const HTML_ESCAPE_RE = /[&<>"']/g;

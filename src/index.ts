@@ -166,9 +166,12 @@ async function startCli(): Promise<void> {
           usage: "genmedia gallery [subcommand] [target] [flags]",
           subcommands: {
             "(none)":
-              "Print current session info (path, url, exists). Never opens a browser, never deletes.",
+              "Bare `gallery` in pretty TTY prints a single `→ Open: <url>` hint. JSON / non-TTY prints the full info payload. Use `gallery info` or `--json` to force the full payload from a TTY.",
+            info: "genmedia gallery info — print the full info payload (session id, path, url, exists, latest pointer) regardless of TTY.",
             open: 'genmedia gallery open [<target>] [--print] — no target opens the all-sessions index. Targets: "current", "latest", or <session_id>. Pass --print to resolve path/url without launching the browser.',
             list: "genmedia gallery list [--limit <n>] — list recorded sessions, newest first. (default limit: 50)",
+            rename:
+              'genmedia gallery rename [<target>] --label "<name>" | --clear — set or remove a display label. Target = "current" (default) | "latest" | <session_id>. The on-disk session id is unchanged.',
             clear:
               'genmedia gallery clear [<target>] --yes — target = "current" (default) | "latest" | "all" | <session_id>. --yes is REQUIRED; no interactive prompt.',
           },

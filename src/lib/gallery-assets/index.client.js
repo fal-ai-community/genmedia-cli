@@ -13,6 +13,7 @@
     const assets = s.asset_count || 0;
     return {
       session_id: s.session_id,
+      label: s.label || null,
       agent: s.agent || null,
       agent_host: s.agent_host || null,
       started_at: s.started_at || 0,
@@ -21,6 +22,7 @@
       assets: assets,
       breakdown: kinds,
       modalities: s.modalities || [],
+      previews: Array.isArray(s.previews) ? s.previews : [],
       live: isLive(s.updated_at),
     };
   }
@@ -114,6 +116,7 @@
       arr = arr.filter(
         (s) =>
           s.session_id.toLowerCase().indexOf(q) !== -1 ||
+          (s.label && s.label.toLowerCase().indexOf(q) !== -1) ||
           (s.agent && s.agent.toLowerCase().indexOf(q) !== -1) ||
           (s.agent_host && s.agent_host.toLowerCase().indexOf(q) !== -1),
       );
@@ -176,12 +179,7 @@
       const t = order[j];
       if (!total[t]) continue;
       const c = (H.TYPE_INFO[t] || H.TYPE_INFO.other).color;
-      html +=
-        '<span class="b"><span class="sw" style="background:' +
-        c +
-        '"></span>' +
-        H.typeLabel(t, total[t]) +
-        "</span>";
+      html += `<span class="b" style="color:${c}" title="${H.escapeHtml(H.typeLabel(t, total[t]))}">${H.iconForKind(t, 12)}<span class="bn">${total[t]}</span></span>`;
     }
     root.innerHTML = html;
   }
@@ -191,12 +189,12 @@
     el.className = `session-card${s.live ? " live" : ""}`;
     el.href = `./sessions/${encodeURIComponent(s.session_id)}/index.html`;
 
-    const agent =
-      [s.agent, s.agent_host].filter(Boolean).join(" \u00B7 ") ||
-      "unknown agent";
+    const agentChip = s.agent
+      ? `<span class="chip">${H.escapeHtml(s.agent)}</span>`
+      : "";
 
     const segs = [];
-    const breakdownLabels = [];
+    const breakdownIcons = [];
     const entries = Object.keys(s.breakdown || {})
       .map((k) => [k, s.breakdown[k]])
       .filter((e) => e[1] > 0)
@@ -204,33 +202,60 @@
     for (let i = 0; i < entries.length; i++) {
       const k = entries[i][0];
       const n = entries[i][1];
-      const c = (H.TYPE_INFO[k] || H.TYPE_INFO.other).color;
-      segs.push(`<span style="background:${c}; flex:${n}"></span>`);
-      breakdownLabels.push(H.typeLabel(k, n));
+      const info = H.TYPE_INFO[k] || H.TYPE_INFO.other;
+      segs.push(`<span style="background:${info.color}; flex:${n}"></span>`);
+      breakdownIcons.push(
+        `<span class="bi" style="color:${info.color}" title="${H.escapeHtml(H.typeLabel(k, n))}">${H.iconForKind(k, 12)}<span class="bn">${n}</span></span>`,
+      );
     }
 
+    let thumbsHtml = "";
+    if (s.previews?.length) {
+      const items = [];
+      for (let i = 0; i < s.previews.length; i++) {
+        const p = s.previews[i];
+        const src = H.preferredSrc(p);
+        const safeSrc = H.escapeHtml(src);
+        let media;
+        if (p.kind === "video" && src) {
+          // First-frame trick: preload only metadata + seek to 0.1s so the
+          // browser paints a static poster without streaming the whole file.
+          media = `<video preload="metadata" muted playsinline src="${safeSrc}#t=0.1"></video><span class="play-badge"><span class="disc">${H.svgPlay(16)}</span></span>`;
+        } else if (p.kind === "audio") {
+          // Synthetic waveform — deterministic seed off the URL.
+          const bars = H.generateWaveform(p.url || p.file || "", 18, 0.55);
+          let barsHtml = "";
+          for (let b = 0; b < bars.length; b++) {
+            barsHtml += `<span class="bar" style="height:${Math.max(12, bars[b] * 100)}%"></span>`;
+          }
+          media = `<div class="audio-thumb">${barsHtml}</div><span class="play-badge"><span class="disc">${H.svgPlay(16)}</span></span>`;
+        } else if (p.kind === "image" && src) {
+          media = `<img src="${safeSrc}" alt="" loading="lazy" />`;
+        } else if (p.kind === "model" || p.kind === "other") {
+          // No meaningful media — render the kind icon as a faded placeholder.
+          const info = H.TYPE_INFO[p.kind] || H.TYPE_INFO.other;
+          media = `<div class="thumb-icon" style="color:${info.color}">${H.iconForKind(p.kind, 36)}</div>`;
+        } else {
+          // Unknown kind or missing src — skip.
+          continue;
+        }
+        items.push(`<span class="thumb">${media}</span>`);
+      }
+      if (items.length) {
+        thumbsHtml = `<div class="sc-thumbs">${items.join("")}</div>`;
+      }
+    }
+
+    const titleText = s.label || s.session_id;
+    const idClass = s.label ? "sc-id" : "sc-id mono";
+    const idTitleAttr = s.label ? ` title="${H.escapeHtml(s.session_id)}"` : "";
     el.innerHTML =
-      '<div class="sc-top">' +
-      '<span class="sc-id">' +
-      H.escapeHtml(s.session_id) +
-      "</span>" +
-      '<span class="chip">' +
-      H.escapeHtml(agent) +
-      "</span>" +
-      "</div>" +
+      `<div class="sc-top"><span class="${idClass}"${idTitleAttr}>${H.escapeHtml(titleText)}</span>${agentChip}</div>` +
+      thumbsHtml +
       '<p class="sc-summary">' +
-      "<strong>" +
-      s.assets +
-      "</strong> " +
-      (s.assets === 1 ? "asset" : "assets") +
-      " across <strong>" +
-      s.runs +
-      "</strong> " +
-      (s.runs === 1 ? "run" : "runs") +
-      (breakdownLabels.length
-        ? '<span class="sep">\u00B7</span><span class="breakdown">' +
-          H.escapeHtml(breakdownLabels.join(", ")) +
-          "</span>"
+      `<span class="sc-totals"><strong>${s.assets}</strong> ${s.assets === 1 ? "asset" : "assets"} across <strong>${s.runs}</strong> ${s.runs === 1 ? "run" : "runs"}</span>` +
+      (breakdownIcons.length
+        ? `<span class="breakdown-icons">${breakdownIcons.join("")}</span>`
         : "") +
       "</p>" +
       '<div class="sc-typebar">' +
