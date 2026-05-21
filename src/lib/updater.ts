@@ -10,6 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname } from "node:path";
+import { track } from "./analytics";
 import { loadConfig, saveConfig } from "./config";
 import { VERSION } from "./version";
 
@@ -333,5 +334,6 @@ export async function runManualUpdate(opts: {
   }
 
   result.updated = true;
+  track("update_applied", { from: VERSION, to: latest });
   return result;
 }

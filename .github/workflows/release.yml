@@ -79,10 +79,13 @@ jobs:
 
       - name: Build binary
         shell: bash
+        env:
+          POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
         run: |
           bun run scripts/gen-version.ts
           bun build --compile --minify --bytecode \
             --target=${{ matrix.target }} \
+            --define "__POSTHOG_KEY__=\"${POSTHOG_KEY:-}\"" \
             src/index.ts \
             --outfile dist/${{ matrix.artifact }}
 

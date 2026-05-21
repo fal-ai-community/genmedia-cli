@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../lib/analytics";
 import { displayName, runLoginFlow } from "../lib/auth/flow";
 import { clearSession } from "../lib/auth/session";
 import {
@@ -169,6 +170,7 @@ async function runNonInteractive(args: Record<string, unknown>): Promise<void> {
   }
 
   saveConfig(next);
+  track("setup_completed", { interactive: false });
   output(summaryPayload(next));
 }
 
@@ -360,6 +362,7 @@ async function runInteractive(): Promise<void> {
     };
 
     saveConfig(config);
+    track("setup_completed", { interactive: true });
 
     printLine();
     printLine(

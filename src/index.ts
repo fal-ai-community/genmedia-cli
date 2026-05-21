@@ -1,4 +1,5 @@
 import { type CommandDef, defineCommand, renderUsage, runMain } from "citty";
+import { initAnalytics, shutdownAnalytics, track } from "./lib/analytics";
 import { renderBanner } from "./lib/banner";
 import { loadConfig } from "./lib/config";
 import { loadDotEnv } from "./lib/env";
@@ -16,6 +17,30 @@ import {
 } from "./lib/updater";
 import { VERSION } from "./lib/version";
 
+const KNOWN_COMMANDS = new Set([
+  "setup",
+  "init",
+  "skills",
+  "models",
+  "schema",
+  "run",
+  "status",
+  "upload",
+  "pricing",
+  "docs",
+  "version",
+  "update",
+]);
+
+function sanitizeCommandName(arg: string | undefined): string {
+  if (!arg) return "(root)";
+  if (arg === "--help" || arg === "-h") return "(help)";
+  if (arg === "--version") return "version";
+  if (arg === "--json") return "(root)";
+  if (KNOWN_COMMANDS.has(arg)) return arg;
+  return "(unknown)";
+}
+
 preSwapPendingUpdate();
 
 // Internal entrypoint used by the background auto-update subprocess.
@@ -23,11 +48,12 @@ preSwapPendingUpdate();
 if (process.argv[2] === "__update-check") {
   runBackgroundUpdateCheck().finally(() => process.exit(0));
 } else {
-  startCli();
+  void startCli();
 }
 
-function startCli(): void {
+async function startCli(): Promise<void> {
   loadDotEnv();
+  initAnalytics();
   maybeTriggerBackgroundUpdate();
 
   // JSON help schema for agents — output before citty intercepts --help
@@ -54,12 +80,14 @@ function startCli(): void {
           "Dev builds only — override the Auth0 API audience. Ignored in the released binary.",
         FAL_BASE_URL:
           "Dev builds only — override the fal.ai base URL for the session-seed hop (e.g. http://localhost:3000). Ignored in the released binary.",
+        GENMEDIA_NO_ANALYTICS:
+          "Set to 1 to disable anonymous usage analytics (also configurable via `analyticsOptOut: true` in ~/.genmedia/config.json)",
       },
       commands: {
         models: {
           description: "Search, list, and inspect fal.ai models",
           usage:
-            "genmedia models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>]",
+            "genmedia models [query] [--category <cat>] [--status <s>] [--limit <n>] [--cursor <token>] [--endpoint_id <id>] [--expand <field>] [--no-classify]",
           args: "[query]",
           options: {
             "--category":
@@ -71,6 +99,8 @@ function startCli(): void {
             "--endpoint_id":
               "Specific endpoint ID(s). Repeat the flag or pass comma-separated values",
             "--expand": "Expand fields: openapi-3.0, enterprise_status",
+            "--no-classify":
+              "Skip auto-inference of --category from the query (default: on when --category is not set)",
           },
         },
         schema: {
@@ -82,11 +112,16 @@ function startCli(): void {
           },
         },
         run: {
-          description: "Run any model (waits for result)",
+          description:
+            "Run any model. Pass an endpoint ID, or a prompt for smart routing.",
           usage:
-            "genmedia run <endpoint_id> [--key value ...] [--logs] [--download [template]]",
-          args: "<endpoint_id>",
+            'genmedia run [<endpoint_id> | "<prompt>"] [--key value ...] [--logs] [--download [template]]',
+          args: "[<endpoint_id> | <prompt>]",
           options: {
+            "<endpoint_id>":
+              "Endpoint ID (must contain '/', e.g. 'fal-ai/flux/dev')",
+            "<prompt>":
+              "Smart routing: a prompt without '/' (e.g. 'a cat on the moon') is classified by modality and routed to a sensible default endpoint. Override with an explicit endpoint ID.",
             "--<key>": "Input parameter (e.g. --prompt 'a cat' --num_images 2)",
             "--async":
               "Submit to queue instead of waiting (returns request_id)",
@@ -214,6 +249,8 @@ function startCli(): void {
         },
       },
     });
+    track("command_run", { name: "(json-help)", ok: true, durationMs: 0 });
+    await shutdownAnalytics();
     process.exit(0);
   }
 
@@ -239,7 +276,14 @@ function startCli(): void {
         const argv = process.argv.slice(2);
         if (argv[0] === "run" && argv.includes("--help")) {
           const endpointId = argv[1];
-          if (endpointId && !endpointId.startsWith("--")) {
+          // Only fetch a model schema for true endpoint IDs (which always
+          // contain "/", e.g. fal-ai/flux/dev). A bare prompt like
+          // `genmedia run "a cat" --help` falls through to static run help.
+          if (
+            endpointId &&
+            !endpointId.startsWith("--") &&
+            endpointId.includes("/")
+          ) {
             const dynamic = await buildDynamicRunCommand(endpointId);
             if (dynamic) return dynamic;
           }
@@ -255,36 +299,58 @@ function startCli(): void {
     },
   });
 
-  runMain(main, {
-    showUsage: async (cmd, parent) => {
-      const anyCmd = cmd as CommandDef;
-      const anyParent = parent as CommandDef | undefined;
-      if (isDynamicRunCommand(anyCmd) && isJsonOutput()) {
-        outputRawJson(await renderDynamicRunUsageJson(anyCmd, anyParent));
-        return;
-      }
-      if (process.stdout.isTTY) {
-        console.log(renderBanner(VERSION, "small"));
-      }
-      const usage = isDynamicRunCommand(anyCmd)
-        ? await renderDynamicRunUsage(anyCmd, anyParent)
-        : await renderUsage(cmd, parent);
-      console.log(`${usage}\n`);
+  const commandName = sanitizeCommandName(process.argv[2]);
+  const commandStart = performance.now();
+  let tracked = false;
+  const fireCommandRun = (ok: boolean, errorClass?: string): void => {
+    if (tracked) return;
+    tracked = true;
+    track("command_run", {
+      name: commandName,
+      ok,
+      durationMs: Math.round(performance.now() - commandStart),
+      ...(errorClass ? { errorClass } : {}),
+    });
+  };
 
-      if (
-        !isJsonOutput() &&
-        !process.env.FAL_KEY &&
-        !loadConfig().apiKey &&
-        !loadConfig().session
-      ) {
-        console.log(
-          "Tip: run `genmedia auth login` to sign in with your fal.ai account, set FAL_KEY in your environment, or run `genmedia setup`.",
-        );
-        console.log(
-          '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
-        );
-        console.log();
-      }
-    },
-  });
+  try {
+    await runMain(main, {
+      showUsage: async (cmd, parent) => {
+        const anyCmd = cmd as CommandDef;
+        const anyParent = parent as CommandDef | undefined;
+        if (isDynamicRunCommand(anyCmd) && isJsonOutput()) {
+          outputRawJson(await renderDynamicRunUsageJson(anyCmd, anyParent));
+          return;
+        }
+        if (process.stdout.isTTY) {
+          console.log(renderBanner(VERSION, "small"));
+        }
+        const usage = isDynamicRunCommand(anyCmd)
+          ? await renderDynamicRunUsage(anyCmd, anyParent)
+          : await renderUsage(cmd, parent);
+        console.log(`${usage}\n`);
+
+        if (
+          !isJsonOutput() &&
+          !process.env.FAL_KEY &&
+          !loadConfig().apiKey &&
+          !loadConfig().session
+        ) {
+          console.log(
+            "Tip: run `genmedia auth login` to sign in with your fal.ai account, set FAL_KEY in your environment, or run `genmedia setup`.",
+          );
+          console.log(
+            '     For agents/CI: `genmedia setup --non-interactive --api-key "$FAL_KEY"`.',
+          );
+          console.log();
+        }
+      },
+    });
+    fireCommandRun(true);
+  } catch (err) {
+    fireCommandRun(false, (err as Error)?.constructor?.name ?? "Error");
+    throw err;
+  } finally {
+    await shutdownAnalytics();
+  }
 }

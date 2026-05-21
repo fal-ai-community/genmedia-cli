@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../../lib/analytics";
 import { isJsonOutput, output } from "../../lib/output";
 import { uninstallSkill } from "../../lib/skills-install";
 import { colors, symbols } from "../../lib/ui";
@@ -16,10 +17,15 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const { removed, installedDir } = uninstallSkill(process.cwd(), args.name);
+    const { removed, installedDir, targets } = await uninstallSkill(
+      process.cwd(),
+      args.name,
+    );
+
+    track("skills_removed", { name: args.name, removed });
 
     if (isJsonOutput()) {
-      output({ name: args.name, removed, installedDir });
+      output({ name: args.name, removed, installedDir, targets });
       return;
     }
 

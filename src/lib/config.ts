@@ -3,6 +3,7 @@ import {
   createDecipheriv,
   createHash,
   randomBytes,
+  randomUUID,
 } from "node:crypto";
 import {
   chmodSync,
@@ -29,6 +30,17 @@ export interface AuthSession {
   };
 }
 
+// Forward-declared shape of the routing-defaults manifest cache. The full
+// `DefaultsManifest` type lives in `src/lib/defaults-manifest.ts` to keep the
+// classifier+manifest module self-contained.
+export interface DefaultsManifestCacheEntry {
+  fetchedAt: number;
+  manifest: {
+    version: 1;
+    defaults: Record<string, string>;
+  };
+}
+
 // In-memory representation — secrets are decrypted here
 export interface GenmediaConfig {
   apiKey?: string;
@@ -38,6 +50,9 @@ export interface GenmediaConfig {
   autoUpdate?: boolean;
   lastUpdateCheckAt?: number;
   latestKnownVersion?: string;
+  installationId?: string;
+  analyticsOptOut?: boolean;
+  defaultsManifestCache?: DefaultsManifestCacheEntry;
 }
 
 // On-disk representation — secrets are stored encrypted, never plaintext
@@ -49,6 +64,9 @@ interface StoredConfig {
   autoUpdate?: boolean;
   lastUpdateCheckAt?: number;
   latestKnownVersion?: string;
+  installationId?: string;
+  analyticsOptOut?: boolean;
+  defaultsManifestCache?: DefaultsManifestCacheEntry;
 }
 
 export const CONFIG_DIR = join(userInfo().homedir, ".genmedia");
@@ -116,6 +134,9 @@ export function loadConfig(): GenmediaConfig {
         autoUpdate: stored.autoUpdate,
         lastUpdateCheckAt: stored.lastUpdateCheckAt,
         latestKnownVersion: stored.latestKnownVersion,
+        installationId: stored.installationId,
+        analyticsOptOut: stored.analyticsOptOut,
+        defaultsManifestCache: stored.defaultsManifestCache,
         ...(stored.apiKey
           ? { apiKey: decryptString(stored.apiKey) ?? undefined }
           : {}),
@@ -140,6 +161,9 @@ export function saveConfig(config: GenmediaConfig): void {
     autoUpdate: config.autoUpdate,
     lastUpdateCheckAt: config.lastUpdateCheckAt,
     latestKnownVersion: config.latestKnownVersion,
+    installationId: config.installationId,
+    analyticsOptOut: config.analyticsOptOut,
+    defaultsManifestCache: config.defaultsManifestCache,
     ...(config.apiKey ? { apiKey: encryptString(config.apiKey) } : {}),
     ...(config.session
       ? { session: encryptString(JSON.stringify(config.session)) }
@@ -157,4 +181,15 @@ export function saveConfig(config: GenmediaConfig): void {
 
 export function invalidateConfigCache(): void {
   _cached = null;
+}
+
+// Returns the persistent installation ID. Generates one on first call and
+// persists it to the config file. Used as the PostHog distinct_id and any
+// other anonymous-but-stable identifier the CLI needs.
+export function getOrCreateInstallationId(): string {
+  const cfg = loadConfig();
+  if (cfg.installationId) return cfg.installationId;
+  const id = randomUUID();
+  saveConfig({ ...cfg, installationId: id });
+  return id;
 }

@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../../lib/analytics";
 import { error, isJsonOutput, output } from "../../lib/output";
 import {
   getSkillsApiUrl,
@@ -29,6 +30,7 @@ export default defineCommand({
     try {
       result = await searchSkillsApi(query);
     } catch (e) {
+      track("skills_searched", { query, ok: false });
       error(`Failed to fetch skills registry`, {
         url: `${getSkillsApiUrl()}${query ? `?q=${encodeURIComponent(query)}` : ""}`,
         message: (e as Error).message,
@@ -42,6 +44,12 @@ export default defineCommand({
       installed: installedNames.has(s.name),
       score: s.score,
     }));
+
+    track("skills_searched", {
+      query,
+      ok: true,
+      resultCount: skills.length,
+    });
 
     if (isJsonOutput()) {
       output({

@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { track } from "../../lib/analytics";
 import { isJsonOutput, output } from "../../lib/output";
 import { getIndex, installSkill } from "../../lib/skills-install";
 import { readInstalledManifest } from "../../lib/skills-registry";
@@ -43,6 +44,7 @@ export default defineCommand({
         sharedIndex: index,
       });
       updated.push({ name, status: result.status });
+      track("skills_updated", { name, status: result.status });
     }
 
     if (isJsonOutput()) {
