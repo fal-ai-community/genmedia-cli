@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { track } from "../lib/analytics";
-import { PLATFORM_BASE, platformHeaders } from "../lib/api";
+import { PLATFORM_BASE, platformFetch } from "../lib/api";
 import { classifyModality, modalityToCategory } from "../lib/modality";
 import { error, output } from "../lib/output";
 
@@ -198,7 +198,7 @@ export default defineCommand({
       url.searchParams.append("expand", value);
     }
 
-    const res = await fetch(url.toString(), { headers: platformHeaders() });
+    const res = await platformFetch(url.toString());
     if (!res.ok) error(`Failed (${res.status})`, await res.text());
 
     const data = (await res.json()) as ModelsResponse;

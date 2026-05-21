@@ -17,6 +17,19 @@ import { join } from "node:path";
 
 export type OutputFormat = "auto" | "json" | "standard";
 
+export interface AuthSession {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  obtained_at: number;
+  user: {
+    id: string;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
 // Forward-declared shape of the routing-defaults manifest cache. The full
 // `DefaultsManifest` type lives in `src/lib/defaults-manifest.ts` to keep the
 // classifier+manifest module self-contained.
@@ -28,9 +41,10 @@ export interface DefaultsManifestCacheEntry {
   };
 }
 
-// In-memory representation — apiKey is always decrypted here
+// In-memory representation — secrets are decrypted here
 export interface GenmediaConfig {
   apiKey?: string;
+  session?: AuthSession;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
   autoUpdate?: boolean;
@@ -41,9 +55,10 @@ export interface GenmediaConfig {
   defaultsManifestCache?: DefaultsManifestCacheEntry;
 }
 
-// On-disk representation — apiKey is stored encrypted, never plaintext
+// On-disk representation — secrets are stored encrypted, never plaintext
 interface StoredConfig {
   apiKey?: string;
+  session?: string;
   outputFormat?: OutputFormat;
   autoLoadEnv?: boolean;
   autoUpdate?: boolean;
@@ -68,7 +83,7 @@ function deriveMachineKey(): Buffer {
   return createHash("sha256").update(identity).digest();
 }
 
-function encryptApiKey(plaintext: string): string {
+function encryptString(plaintext: string): string {
   const key = deriveMachineKey();
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
@@ -80,7 +95,7 @@ function encryptApiKey(plaintext: string): string {
   return [iv, tag, encrypted].map((b) => b.toString("base64")).join(":");
 }
 
-function decryptApiKey(ciphertext: string): string | null {
+function decryptString(ciphertext: string): string | null {
   try {
     const parts = ciphertext.split(":");
     if (parts.length !== 3) return null;
@@ -93,6 +108,16 @@ function decryptApiKey(ciphertext: string): string | null {
     );
   } catch {
     return null;
+  }
+}
+
+function decodeSession(blob: string): AuthSession | undefined {
+  const json = decryptString(blob);
+  if (!json) return undefined;
+  try {
+    return JSON.parse(json) as AuthSession;
+  } catch {
+    return undefined;
   }
 }
 
@@ -113,8 +138,9 @@ export function loadConfig(): GenmediaConfig {
         analyticsOptOut: stored.analyticsOptOut,
         defaultsManifestCache: stored.defaultsManifestCache,
         ...(stored.apiKey
-          ? { apiKey: decryptApiKey(stored.apiKey) ?? undefined }
+          ? { apiKey: decryptString(stored.apiKey) ?? undefined }
           : {}),
+        ...(stored.session ? { session: decodeSession(stored.session) } : {}),
       };
       return _cached;
     }
@@ -138,7 +164,10 @@ export function saveConfig(config: GenmediaConfig): void {
     installationId: config.installationId,
     analyticsOptOut: config.analyticsOptOut,
     defaultsManifestCache: config.defaultsManifestCache,
-    ...(config.apiKey ? { apiKey: encryptApiKey(config.apiKey) } : {}),
+    ...(config.apiKey ? { apiKey: encryptString(config.apiKey) } : {}),
+    ...(config.session
+      ? { session: encryptString(JSON.stringify(config.session)) }
+      : {}),
   };
   writeFileSync(CONFIG_FILE, JSON.stringify(stored, null, 2), "utf-8");
   // Restrict file to owner read/write only (no-op on Windows but harmless)
@@ -148,6 +177,10 @@ export function saveConfig(config: GenmediaConfig): void {
     // Windows — permissions work differently, not an error
   }
   _cached = config;
+}
+
+export function invalidateConfigCache(): void {
+  _cached = null;
 }
 
 // Returns the persistent installation ID. Generates one on first call and

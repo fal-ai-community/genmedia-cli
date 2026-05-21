@@ -24,20 +24,53 @@ irm https://genmedia.sh/install.ps1 | iex
 genmedia setup
 ```
 
-Interactive wizard that configures:
+The interactive wizard first asks how you want to authenticate:
 
-- **API key** — saved encrypted to your local config (or skip and use `FAL_KEY` in your environment)
+- **Sign in with fal.ai (recommended)** — opens your browser and signs you in to your fal.ai account via WorkOS. The session is stored encrypted in `~/.genmedia/config.json` and is refreshed automatically.
+- **Use an API key** — paste a key from [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys). Saved encrypted, or skip saving and use `FAL_KEY` in your environment.
+- **Skip for now** — configure later or rely on `FAL_KEY` at runtime.
+
+It then configures:
+
 - **Auto-load `.env`** — automatically load `FAL_KEY` and related vars from a project `.env` file
 - **Output mode** — `auto` (pretty in TTY, JSON when piped), `json` (always structured), or `standard` (always human-readable)
 - **Automatic updates** — check for new versions in the background and swap in on next launch (default: on; set `GENMEDIA_NO_UPDATE=1` to disable)
 
-Get your API key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys).
-
-To skip the wizard, set the key in your environment:
+To skip the wizard entirely, run `genmedia auth login` for browser sign-in, or set the key in your environment:
 
 ```bash
 export FAL_KEY=your_fal_api_key
 ```
+
+### `auth` — Sign in with your fal.ai account
+
+```bash
+genmedia auth login                       # open the browser to sign in
+genmedia auth login --force               # re-authenticate even if a session exists
+genmedia auth login --connection github   # skip the provider picker, go straight to GitHub
+genmedia auth status                      # show current auth source, user, and expiry
+genmedia auth status --verify             # also verify the token against the auth provider
+genmedia auth logout                      # clear the local session
+genmedia auth logout --revoke             # also revoke the refresh token server-side
+```
+
+Sign-in uses the OAuth 2.0 device-authorization grant against `auth.fal.ai`: the CLI prints a verification code, opens your browser, and you confirm the code on the activation page. Works over SSH and headless terminals — the URL and code are also printed to stdout so you can copy-paste them manually. With `--connection`, the CLI hops through fal.ai's session-seed endpoint to skip the provider picker and auto-confirm if you already have an active session.
+
+| Env var | Description |
+|---|---|
+| `FAL_AUTH_DEBUG=1` | Print debug logs from the auth flow. Works in every build. |
+| `FAL_AUTH_DOMAIN` | **Dev builds only.** Override the Auth0 issuer (default: `https://auth.fal.ai`). Ignored in the released binary. |
+| `FAL_AUTH_CLIENT_ID` | **Dev builds only.** Override the Auth0 client_id. Ignored in the released binary. |
+| `FAL_AUTH_AUDIENCE` | **Dev builds only.** Override the Auth0 API audience. Ignored in the released binary. |
+| `FAL_BASE_URL` | **Dev builds only.** Override the fal.ai base URL used for session-seed (e.g. `http://localhost:3000`). Ignored in the released binary. |
+
+The "dev builds only" variables are honored when running from source (`bun run dev`) and are ignored in the compiled binary distributed via `genmedia.sh/install`. This stops a hostile environment from redirecting the sign-in flow to a malicious host. To test against a local webapp, run `FAL_BASE_URL=http://localhost:3000 bun run dev auth login`.
+
+**Auth precedence** for outgoing API calls:
+
+1. `FAL_KEY` environment variable (always wins)
+2. WorkOS session created by `auth login` (refreshed automatically)
+3. API key saved by `setup`
 
 ### Non-interactive setup (agents / CI)
 
@@ -46,11 +79,12 @@ genmedia setup --non-interactive --api-key "$FAL_KEY"
 genmedia setup --non-interactive --output-format json --no-auto-load-env --auto-update
 ```
 
-Every flag is optional — fields you don't pass keep their current values, so repeated invocations are idempotent.
+Every flag is optional — fields you don't pass keep their current values, so repeated invocations are idempotent. Browser sign-in cannot run non-interactively; set `FAL_KEY` or pass `--api-key` instead.
 
 | Flag | Description |
 |---|---|
 | `--non-interactive`, `-y` | Skip all prompts. Required when there is no TTY. |
+| `--auth-mode <session\|key\|skip>` | Preferred auth mode. `session` prints instructions to run `genmedia auth login` separately. |
 | `--api-key <key>` | API key to save. Pass `""` to clear the saved key. |
 | `--no-save-key` | With `--api-key`, don't persist the key to `config.json` (use `FAL_KEY` at runtime instead). |
 | `--output-format <auto\|json\|standard>` | Default output mode. |

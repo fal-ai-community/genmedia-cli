@@ -1,4 +1,4 @@
-import { PLATFORM_BASE, platformHeaders } from "./api";
+import { PLATFORM_BASE, platformFetch } from "./api";
 
 export interface ModelSchemaFetchResult {
   model: Record<string, unknown>;
@@ -28,7 +28,7 @@ export async function fetchModelSchema(
 
   let res: Response;
   try {
-    res = await fetch(url.toString(), { headers: platformHeaders() });
+    res = await platformFetch(url.toString());
   } catch (err) {
     return {
       ok: false,
