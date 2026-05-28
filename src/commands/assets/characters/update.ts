@@ -16,7 +16,7 @@ export default defineCommand({
     reference_image_url: {
       type: "string",
       description:
-        "Replacement reference images (1-20). Repeat or comma-separated.",
+        "Replacement reference images (1-20). Pass a request_id / asset_id / vector_id from existing fal media; only pass a URL for external images. Repeat or pass comma-separated.",
     },
     cover_image_url: {
       type: "string",

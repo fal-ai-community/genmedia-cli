@@ -41,7 +41,7 @@ export default defineCommand({
   meta: {
     name: "upload",
     description:
-      "Upload a local file or URL into the fal Assets library (chains fal-storage upload if needed)",
+      "Bring external media (a local file or non-fal URL) into the fal Assets library. For media that already came from a `genmedia run`, use the request_id with `assets favorite` / `collections add` / `characters create` instead.",
   },
   args: {
     target: {

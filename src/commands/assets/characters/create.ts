@@ -23,7 +23,7 @@ export default defineCommand({
     reference_image_url: {
       type: "string",
       description:
-        "Reference images (1-20). Pass fal-hosted URL, asset_id, request_id, or vector_id. Repeat or comma-separated.",
+        "Reference images (1-20). Pass a request_id / asset_id / vector_id from existing fal media; only pass a URL for external (non-fal) images. Repeat the flag or pass comma-separated.",
     },
     cover_image_url: {
       type: "string",

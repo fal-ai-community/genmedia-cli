@@ -151,9 +151,10 @@ async function startCli(): Promise<void> {
               "genmedia assets characters <list|create|get|update|delete|favorite|unfavorite> [args]",
           },
           notes: [
-            "Mutating routes accept --idempotency_key for safe retries (server replays the identical response).",
+            "Reference assets by ID, not URL. Use the strongest one you have: --asset_id (from `assets browse` / `get` / `upload`) > --vector_id (from `assets browse`) > --request_id (from `genmedia run` / `status`).",
+            "`assets upload` is for external media only (local files, non-fal URLs).",
             "Asset-target flags (--asset_id, --request_id, --vector_id) are mutually exclusive; pass exactly one.",
-            "Uploads must reference a fal-hosted URL; `assets upload <local_file>` chains an fal-storage upload automatically.",
+            "Mutating routes accept --idempotency_key for safe retries.",
           ],
         },
         status: {

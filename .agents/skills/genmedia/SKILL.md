@@ -64,6 +64,66 @@ skill for the full command reference.
    the paths from `downloaded_files[]`; otherwise present the URLs from
    `result` clearly.
 
+## Assets library (`genmedia assets ...`)
+
+The fal Assets API lets you persist generated media, organize it into
+collections, and define reusable characters.
+
+### Three ways to identify an asset
+
+- **`asset_id`** — present for media that's been saved into the user's
+  library (favorited, added to a collection, or uploaded). Returned by
+  `assets browse` / `assets get` / `assets upload`.
+- **`vector_id`** — present for any media in the user's library or in a
+  semantic-search result. Returned by `assets browse`.
+- **`request_id`** — the generation the user just ran. Returned by
+  `genmedia run` and `genmedia status`.
+
+**Which to pass.** Use the strongest one you have, in this order:
+
+1. `--asset_id` if you have it.
+2. `--vector_id` otherwise.
+3. `--request_id` otherwise.
+
+Use these flags on every command that takes an asset target:
+`assets favorite`, `assets unfavorite`, `assets tags assign`,
+`assets collections add`, `assets characters create --reference_image_url <id>`.
+
+### `assets upload` is for external media only
+
+Use `assets upload` only for **local files or non-fal URLs** — media that
+isn't already in fal's system. For anything that came out of a
+`genmedia run`, use the `request_id` instead.
+
+### Cheatsheet
+
+| Strongest ID you have | Use |
+|---|---|
+| `asset_id` (from `assets browse` / `get` / `upload`) | `--asset_id <id>` |
+| `vector_id` (from `assets browse`) | `--vector_id <id>` |
+| `request_id` (from `genmedia run` / `status`) | `--request_id <id>` |
+| Local file or non-fal URL | `assets upload <path_or_url>` |
+
+### Example — character from a fresh generation
+
+```bash
+RUN=$(genmedia run fal-ai/flux/schnell --prompt "an elegant black cat" --json)
+REQ=$(echo "$RUN" | jq -r .request_id)
+
+genmedia assets characters create "Whiskers" \
+  --description "An elegant black cat sitting on a moss-covered rock" \
+  --reference_image_url "$REQ" \
+  --identifier whiskers \
+  --json
+```
+
+Same pattern for `assets collections add --request_id <id>` and
+`assets favorite --request_id <id>`. Assets referenced by `request_id` may
+take a moment to appear in `assets browse` / semantic search.
+
+For the full command tree, run `genmedia assets --help` or any subcommand
+with `--help`.
+
 ## Handling errors
 
 When a command exits non-zero, it prints a JSON error object to stderr:

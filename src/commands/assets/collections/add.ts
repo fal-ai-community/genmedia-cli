@@ -5,7 +5,8 @@ import { output } from "../../../lib/output";
 export default defineCommand({
   meta: {
     name: "add",
-    description: "Add an asset to a collection (auto-materializes target)",
+    description:
+      "Add an asset to a collection. Pass any one of --asset_id / --request_id / --vector_id; the server resolves it.",
   },
   args: {
     collection_id: {
