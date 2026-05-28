@@ -20,7 +20,7 @@ export default defineCommand({
       type: "string",
       description: "Optional @mention identifier (max 64 chars)",
     },
-    reference_image_url: {
+    reference_image: {
       type: "string",
       description:
         "Reference images (1-20). Pass a request_id or vector_id from existing fal media; only pass a URL for external (non-fal) images. Repeat the flag or pass comma-separated.",
@@ -35,10 +35,10 @@ export default defineCommand({
     },
   },
   async run({ args, rawArgs }) {
-    const referenceUrls = collectOptionValues(rawArgs, "reference_image_url");
-    if (referenceUrls.length === 0) {
+    const referenceImages = collectOptionValues(rawArgs, "reference_image");
+    if (referenceImages.length === 0) {
       error(
-        "At least one --reference_image_url is required (max 20). Pass a fal-hosted URL, asset_id, request_id, or vector_id.",
+        "At least one --reference_image is required (max 20). Pass a fal-hosted URL, request_id, or vector_id.",
       );
     }
     const data = await assetsRequest<{ character: unknown }>({
@@ -48,7 +48,7 @@ export default defineCommand({
         name: args.name,
         description: args.description,
         ...(args.identifier ? { identifier: args.identifier } : {}),
-        reference_image_urls: referenceUrls,
+        reference_images: referenceImages,
         ...(args.cover_image_url
           ? { cover_image_url: args.cover_image_url }
           : {}),

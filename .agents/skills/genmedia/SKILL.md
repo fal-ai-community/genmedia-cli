@@ -74,7 +74,7 @@ collections, and define reusable characters.
 - **`vector_id`** — present for any media in the user's library or in a
   semantic-search result. Returned by `assets browse` / `assets get` /
   `assets upload`. Used both as a flag on mutations and as the positional
-  argument for `assets get / update / delete` and `assets tags for-asset`.
+  argument for `assets get` and `assets tags for-asset`.
 - **`request_id`** — the generation the user just ran. Returned by
   `genmedia run` and `genmedia status`.
 
@@ -85,7 +85,7 @@ fresh generation.
 Use these flags on every command that takes an asset target:
 `assets favorite`, `assets unfavorite`, `assets tags assign / unassign / set`,
 `assets collections add / remove`, `assets characters create
---reference_image_url <id>`.
+--reference_image <id>`.
 
 ### `assets upload` is for external media only
 
@@ -109,7 +109,7 @@ REQ=$(echo "$RUN" | jq -r .request_id)
 
 genmedia assets characters create "Whiskers" \
   --description "An elegant black cat sitting on a moss-covered rock" \
-  --reference_image_url "$REQ" \
+  --reference_image "$REQ" \
   --identifier whiskers \
   --json
 ```

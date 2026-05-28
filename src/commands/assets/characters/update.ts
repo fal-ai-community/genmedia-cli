@@ -13,7 +13,7 @@ export default defineCommand({
     },
     name: { type: "string", description: "New display name" },
     description: { type: "string", description: "New description" },
-    reference_image_url: {
+    reference_image: {
       type: "string",
       description:
         "Replacement reference images (1-20). Pass a request_id or vector_id from existing fal media; only pass a URL for external images. Repeat or pass comma-separated.",
@@ -28,15 +28,15 @@ export default defineCommand({
     },
   },
   async run({ args, rawArgs }) {
-    const referenceUrls = collectOptionValues(rawArgs, "reference_image_url");
+    const referenceImages = collectOptionValues(rawArgs, "reference_image");
     const data = await assetsRequest<{ character: unknown }>({
       method: "PATCH",
       path: `/characters/${args.character_id}`,
       body: {
         ...(args.name ? { name: args.name } : {}),
         ...(args.description ? { description: args.description } : {}),
-        ...(referenceUrls.length > 0
-          ? { reference_image_urls: referenceUrls }
+        ...(referenceImages.length > 0
+          ? { reference_images: referenceImages }
           : {}),
         ...(args.cover_image_url !== undefined
           ? { cover_image_url: args.cover_image_url }

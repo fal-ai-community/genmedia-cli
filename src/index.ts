@@ -137,10 +137,6 @@ async function startCli(): Promise<void> {
             get: "genmedia assets get <vector_id>",
             upload:
               "genmedia assets upload <file_or_url> [--type ...] [--prompt ...] [--collection_id ...] [--favorite] [--tag_id ...] [--idempotency_key ...]",
-            update:
-              "genmedia assets update <vector_id> --prompt <text> [--idempotency_key ...]",
-            delete:
-              "genmedia assets delete <vector_id> [--idempotency_key ...]",
             favorite:
               "genmedia assets favorite (--vector_id|--request_id) <id> [--idempotency_key ...]",
             unfavorite:
