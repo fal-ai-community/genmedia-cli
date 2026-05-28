@@ -9,7 +9,6 @@ export default defineCommand({
       "Favorite an asset (auto-materializes from request_id/vector_id)",
   },
   args: {
-    asset_id: { type: "string", description: "Persisted asset ID" },
     request_id: {
       type: "string",
       description: "Request ID (auto-materialized into an asset)",
@@ -25,10 +24,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const target = resolveAssetTarget(args);
-    const data = await assetsRequest<{
-      asset_id: string;
-      is_favorited: boolean;
-    }>({
+    const data = await assetsRequest<{ is_favorited: boolean }>({
       method: "POST",
       path: "/favorite",
       body: target,

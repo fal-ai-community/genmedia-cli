@@ -134,16 +134,17 @@ async function startCli(): Promise<void> {
           subcommands: {
             browse:
               "genmedia assets browse [query] [--media_type ...] [--source ...] [--section ...] [--collection_id ...] [--character_identifier ...] [--tag_id ...] [--tag_mode any|all] [--search_image_url ...] [--search_video_url ...] [--limit ...] [--cursor ...]",
-            get: "genmedia assets get <asset_id>",
+            get: "genmedia assets get <vector_id>",
             upload:
               "genmedia assets upload <file_or_url> [--type ...] [--prompt ...] [--collection_id ...] [--favorite] [--tag_id ...] [--idempotency_key ...]",
             update:
-              "genmedia assets update <asset_id> --prompt <text> [--idempotency_key ...]",
-            delete: "genmedia assets delete <asset_id> [--idempotency_key ...]",
+              "genmedia assets update <vector_id> --prompt <text> [--idempotency_key ...]",
+            delete:
+              "genmedia assets delete <vector_id> [--idempotency_key ...]",
             favorite:
-              "genmedia assets favorite (--asset_id|--request_id|--vector_id) <id> [--idempotency_key ...]",
+              "genmedia assets favorite (--vector_id|--request_id) <id> [--idempotency_key ...]",
             unfavorite:
-              "genmedia assets unfavorite (--asset_id|--request_id|--vector_id) <id> [--idempotency_key ...]",
+              "genmedia assets unfavorite (--vector_id|--request_id) <id> [--idempotency_key ...]",
             tags: "genmedia assets tags <list|create|update|delete|for-asset|set|assign|unassign> [args]",
             collections:
               "genmedia assets collections <list|create|get|update|delete|favorite|unfavorite|browse|add|remove> [args]",
@@ -151,9 +152,9 @@ async function startCli(): Promise<void> {
               "genmedia assets characters <list|create|get|update|delete|favorite|unfavorite> [args]",
           },
           notes: [
-            "Reference assets by ID, not URL. Use the strongest one you have: --asset_id (from `assets browse` / `get` / `upload`) > --vector_id (from `assets browse`) > --request_id (from `genmedia run` / `status`).",
+            "Reference assets by ID, not URL. Use --vector_id (from `assets browse` / `get` / `upload`) for anything in the user's library, or --request_id (from `genmedia run` / `status`) for a fresh generation.",
             "`assets upload` is for external media only (local files, non-fal URLs).",
-            "Asset-target flags (--asset_id, --request_id, --vector_id) are mutually exclusive; pass exactly one.",
+            "Asset-target flags (--vector_id, --request_id) are mutually exclusive; pass exactly one.",
             "Mutating routes accept --idempotency_key for safe retries.",
           ],
         },

@@ -10,7 +10,6 @@ export default defineCommand({
       required: true,
       description: "Collection ID",
     },
-    asset_id: { type: "string", description: "Persisted asset ID" },
     request_id: { type: "string", description: "Request ID" },
     vector_id: { type: "string", description: "Vector ID" },
     idempotency_key: {

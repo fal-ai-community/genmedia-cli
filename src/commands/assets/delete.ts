@@ -8,10 +8,10 @@ export default defineCommand({
     description: "Delete a persisted asset",
   },
   args: {
-    asset_id: {
+    vector_id: {
       type: "positional",
       required: true,
-      description: "Asset ID",
+      description: "Vector ID",
     },
     idempotency_key: {
       type: "string",
@@ -21,10 +21,10 @@ export default defineCommand({
   async run({ args }) {
     await assetsRequest({
       method: "DELETE",
-      path: `/${args.asset_id}`,
+      path: `/${args.vector_id}`,
       idempotencyKey: args.idempotency_key,
       expect204: true,
     });
-    output({ deleted: true, asset_id: args.asset_id });
+    output({ deleted: true, vector_id: args.vector_id });
   },
 });

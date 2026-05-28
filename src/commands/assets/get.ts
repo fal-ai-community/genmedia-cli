@@ -5,19 +5,19 @@ import { output } from "../../lib/output";
 export default defineCommand({
   meta: {
     name: "get",
-    description: "Get a persisted asset by ID",
+    description: "Get a persisted asset by vector ID",
   },
   args: {
-    asset_id: {
+    vector_id: {
       type: "positional",
       required: true,
-      description: "Asset ID",
+      description: "Vector ID",
     },
   },
   async run({ args }) {
     const data = await assetsRequest<{ asset: unknown }>({
       method: "GET",
-      path: `/${args.asset_id}`,
+      path: `/${args.vector_id}`,
     });
     output(data);
   },

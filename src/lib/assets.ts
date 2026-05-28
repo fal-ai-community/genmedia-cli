@@ -7,29 +7,21 @@ export const ASSETS_BASE = `${PLATFORM_BASE}/assets`;
 type QueryValue = string | number | boolean | string[] | undefined | null;
 
 export type AssetTargetArgs = {
-  asset_id?: string;
   request_id?: string;
   vector_id?: string;
 };
 
-export type AssetTarget =
-  | { asset_id: string }
-  | { request_id: string }
-  | { vector_id: string };
+export type AssetTarget = { request_id: string } | { vector_id: string };
 
-// Validates exactly-one of --asset_id / --request_id / --vector_id is set.
+// Validates exactly-one of --request_id / --vector_id is set.
 export function resolveAssetTarget(args: AssetTargetArgs): AssetTarget {
-  const provided = [args.asset_id, args.request_id, args.vector_id].filter(
-    Boolean,
-  );
+  const provided = [args.request_id, args.vector_id].filter(Boolean);
   if (provided.length !== 1) {
-    error("Provide exactly one of --asset_id, --request_id, or --vector_id", {
-      asset_id: args.asset_id ?? null,
+    error("Provide exactly one of --request_id or --vector_id", {
       request_id: args.request_id ?? null,
       vector_id: args.vector_id ?? null,
     });
   }
-  if (args.asset_id) return { asset_id: args.asset_id };
   if (args.request_id) return { request_id: args.request_id };
   if (args.vector_id) return { vector_id: args.vector_id };
   throw new Error("unreachable: resolveAssetTarget");

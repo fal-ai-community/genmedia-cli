@@ -8,7 +8,6 @@ export default defineCommand({
     description: "Unfavorite an asset",
   },
   args: {
-    asset_id: { type: "string", description: "Persisted asset ID" },
     request_id: { type: "string", description: "Request ID" },
     vector_id: { type: "string", description: "Vector ID" },
     idempotency_key: {
@@ -18,10 +17,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const target = resolveAssetTarget(args);
-    const data = await assetsRequest<{
-      asset_id: string;
-      is_favorited: boolean;
-    }>({
+    const data = await assetsRequest<{ is_favorited: boolean }>({
       method: "POST",
       path: "/unfavorite",
       body: target,

@@ -10,7 +10,6 @@ export default defineCommand({
       "Replace the full set of tags on an asset (auto-materializes target)",
   },
   args: {
-    asset_id: { type: "string", description: "Persisted asset ID" },
     request_id: { type: "string", description: "Request ID" },
     vector_id: { type: "string", description: "Vector ID" },
     tag_id: {

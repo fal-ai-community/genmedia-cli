@@ -8,10 +8,10 @@ export default defineCommand({
     description: "Update the saved prompt of an uploaded asset",
   },
   args: {
-    asset_id: {
+    vector_id: {
       type: "positional",
       required: true,
-      description: "Asset ID",
+      description: "Vector ID",
     },
     prompt: {
       type: "string",
@@ -26,7 +26,7 @@ export default defineCommand({
   async run({ args }) {
     const data = await assetsRequest<{ asset: unknown }>({
       method: "PATCH",
-      path: `/${args.asset_id}`,
+      path: `/${args.vector_id}`,
       body: { prompt: args.prompt },
       idempotencyKey: args.idempotency_key,
     });

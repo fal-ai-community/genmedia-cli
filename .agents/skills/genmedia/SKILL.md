@@ -69,25 +69,23 @@ skill for the full command reference.
 The fal Assets API lets you persist generated media, organize it into
 collections, and define reusable characters.
 
-### Three ways to identify an asset
+### Two ways to identify an asset
 
-- **`asset_id`** — present for media that's been saved into the user's
-  library (favorited, added to a collection, or uploaded). Returned by
-  `assets browse` / `assets get` / `assets upload`.
 - **`vector_id`** — present for any media in the user's library or in a
-  semantic-search result. Returned by `assets browse`.
+  semantic-search result. Returned by `assets browse` / `assets get` /
+  `assets upload`. Used both as a flag on mutations and as the positional
+  argument for `assets get / update / delete` and `assets tags for-asset`.
 - **`request_id`** — the generation the user just ran. Returned by
   `genmedia run` and `genmedia status`.
 
-**Which to pass.** Use the strongest one you have, in this order:
-
-1. `--asset_id` if you have it.
-2. `--vector_id` otherwise.
-3. `--request_id` otherwise.
+**Which to pass.** Use `--vector_id` if you have it (anything in the
+library or a search result has one); otherwise use `--request_id` for a
+fresh generation.
 
 Use these flags on every command that takes an asset target:
-`assets favorite`, `assets unfavorite`, `assets tags assign`,
-`assets collections add`, `assets characters create --reference_image_url <id>`.
+`assets favorite`, `assets unfavorite`, `assets tags assign / unassign / set`,
+`assets collections add / remove`, `assets characters create
+--reference_image_url <id>`.
 
 ### `assets upload` is for external media only
 
@@ -97,10 +95,9 @@ isn't already in fal's system. For anything that came out of a
 
 ### Cheatsheet
 
-| Strongest ID you have | Use |
+| What you have | Use |
 |---|---|
-| `asset_id` (from `assets browse` / `get` / `upload`) | `--asset_id <id>` |
-| `vector_id` (from `assets browse`) | `--vector_id <id>` |
+| `vector_id` (from `assets browse` / `get` / `upload`) | `--vector_id <id>` |
 | `request_id` (from `genmedia run` / `status`) | `--request_id <id>` |
 | Local file or non-fal URL | `assets upload <path_or_url>` |
 
@@ -118,8 +115,10 @@ genmedia assets characters create "Whiskers" \
 ```
 
 Same pattern for `assets collections add --request_id <id>` and
-`assets favorite --request_id <id>`. Assets referenced by `request_id` may
-take a moment to appear in `assets browse` / semantic search.
+`assets favorite --request_id <id>`. Newly-referenced media — whether by
+`request_id` or by a `vector_id` from a fresh upload — may take a moment
+to appear in `assets browse` / semantic search while the embedding
+finishes.
 
 For the full command tree, run `genmedia assets --help` or any subcommand
 with `--help`.
