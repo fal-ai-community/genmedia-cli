@@ -127,6 +127,33 @@ async function startCli(): Promise<void> {
           usage: "genmedia upload <file_path_or_url>",
           args: "<file_path_or_url>",
         },
+        assets: {
+          description:
+            "Browse, upload, and manage fal Assets — assets, tags, collections, characters",
+          usage: "genmedia assets <subcommand> [args]",
+          subcommands: {
+            browse:
+              "genmedia assets browse [query] [--media_type ...] [--source ...] [--section ...] [--collection_id ...] [--character_identifier ...] [--tag_id ...] [--tag_mode any|all] [--search_image_url ...] [--search_video_url ...] [--limit ...] [--cursor ...]",
+            get: "genmedia assets get <vector_id>",
+            upload:
+              "genmedia assets upload <file_or_url> [--type ...] [--prompt ...] [--collection_id ...] [--favorite] [--tag_id ...] [--idempotency_key ...]",
+            favorite:
+              "genmedia assets favorite (--vector_id|--request_id) <id> [--idempotency_key ...]",
+            unfavorite:
+              "genmedia assets unfavorite (--vector_id|--request_id) <id> [--idempotency_key ...]",
+            tags: "genmedia assets tags <list|create|update|delete|for-asset|set|assign|unassign> [args]",
+            collections:
+              "genmedia assets collections <list|create|get|update|delete|favorite|unfavorite|browse|add|remove> [args]",
+            characters:
+              "genmedia assets characters <list|create|get|update|delete|favorite|unfavorite> [args]",
+          },
+          notes: [
+            "Reference assets by ID, not URL. Use --vector_id (from `assets browse` / `get` / `upload`) for anything in the user's library, or --request_id (from `genmedia run` / `status`) for a fresh generation.",
+            "`assets upload` is for external media only (local files, non-fal URLs).",
+            "Asset-target flags (--vector_id, --request_id) are mutually exclusive; pass exactly one.",
+            "Mutating routes accept --idempotency_key for safe retries.",
+          ],
+        },
         status: {
           description: "Check job status or get result",
           usage:
@@ -258,6 +285,7 @@ async function startCli(): Promise<void> {
       },
       status: () => import("./commands/status").then((m) => m.default),
       upload: () => import("./commands/upload").then((m) => m.default),
+      assets: () => import("./commands/assets/index").then((m) => m.default),
       pricing: () => import("./commands/pricing").then((m) => m.default),
       docs: () => import("./commands/docs").then((m) => m.default),
       version: () => import("./commands/version").then((m) => m.default),
