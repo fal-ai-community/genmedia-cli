@@ -6,6 +6,7 @@ import {
   extractMediaRefs,
   parseDownloadFlag,
 } from "../lib/download";
+import { buildGalleryFiles, recordRun } from "../lib/gallery";
 import { error, output } from "../lib/output";
 import { normalizeLogs } from "../lib/request-logs";
 
@@ -55,26 +56,47 @@ export default defineCommand({
     const wantResult = Boolean(args.result) || download.mode === "on";
     if (wantResult) {
       const result = await fal.queue.result(endpointId, { requestId });
+      const mediaRefs = extractMediaRefs(result.data);
       let downloaded: Awaited<ReturnType<typeof downloadMedia>> | undefined;
       if (download.mode === "on") {
-        const refs = extractMediaRefs(result.data);
         downloaded =
-          refs.length > 0
+          mediaRefs.length > 0
             ? await downloadMedia({
-                refs,
+                refs: mediaRefs,
                 template: download.template,
                 requestId,
               })
             : { downloaded: [], failed: [] };
       }
+
+      const galleryPaths = recordRun({
+        ts: Date.now(),
+        request_id: requestId,
+        endpoint_id: endpointId,
+        modality: null,
+        prompt: null,
+        duration_ms: null,
+        files: buildGalleryFiles(mediaRefs, downloaded?.downloaded ?? []),
+      });
+
       output(
         {
           status: "completed",
+          endpoint_id: endpointId,
           request_id: requestId,
           result: result.data,
           ...(downloaded ? { downloaded_files: downloaded.downloaded } : {}),
           ...(downloaded && downloaded.failed.length > 0
             ? { download_failures: downloaded.failed }
+            : {}),
+          ...(galleryPaths
+            ? {
+                gallery: {
+                  session_id: galleryPaths.session_id,
+                  path: galleryPaths.index_path,
+                  url: galleryPaths.index_url,
+                },
+              }
             : {}),
         },
         { view: "status", showLogs: Boolean(args.logs) },

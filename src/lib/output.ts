@@ -207,7 +207,14 @@ function printJobView(
   options: OutputOptions,
   writeLine: (line?: string) => void,
 ): void {
-  const { logs, result, downloaded_files, download_failures, ...rest } = data;
+  const {
+    logs,
+    result,
+    downloaded_files,
+    download_failures,
+    gallery,
+    ...rest
+  } = data;
   const status =
     typeof data.status === "string"
       ? data.status
@@ -242,6 +249,11 @@ function printJobView(
     writeLine();
     writeLine(colors.bold(colors.red("Download failures")));
     printDownloadFailures(download_failures, writeLine);
+  }
+
+  if (isRecord(gallery) && typeof gallery.url === "string") {
+    writeLine();
+    writeLine(`${colors.bold("Gallery:")} ${colors.cyan(gallery.url)}`);
   }
 
   if (Array.isArray(logs) && logs.length > 0) {
