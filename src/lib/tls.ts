@@ -1,6 +1,6 @@
 import { X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
-import publicRoots from "./public-ca-bundle.pem" with { type: "text" };
+import { rootCertificates } from "node:tls";
 
 // https://emudhra.we-have-a-problem.com/roots.json
 const DISTRUSTED = new Set([
@@ -28,7 +28,9 @@ export function cleanCertificates(pem: string): string[] {
 
 let cached: { paths: string; certificates: string[] } | undefined;
 
-function trustedCertificates(): string[] {
+const warnedPaths = new Set<string>();
+
+export function trustedCertificates(): string[] {
   // Preserve explicitly configured private CAs without re-enabling affected roots.
   // Resolve lazily so the CLI's opt-in .env loader runs before the first request.
   const paths = [
@@ -37,9 +39,19 @@ function trustedCertificates(): string[] {
   ].filter((path): path is string => Boolean(path));
   const key = JSON.stringify(paths);
   if (cached?.paths === key) return cached.certificates;
-  const certificates = cleanCertificates(publicRoots);
-  for (const path of new Set(paths))
-    certificates.push(...cleanCertificates(readFileSync(path, "utf8")));
+  const certificates = cleanCertificates(rootCertificates.join("\n"));
+  for (const path of new Set(paths)) {
+    try {
+      certificates.push(...cleanCertificates(readFileSync(path, "utf8")));
+    } catch {
+      if (!warnedPaths.has(path)) {
+        console.warn(
+          `genmedia: ignoring unreadable or invalid extra CA file: ${path}`,
+        );
+        warnedPaths.add(path);
+      }
+    }
+  }
   cached = { paths: key, certificates };
   return certificates;
 }

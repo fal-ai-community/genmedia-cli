@@ -16,7 +16,10 @@ jobs:
           bun-version-file: .bun-version
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile --cafile src/lib/public-ca-bundle.pem
+        shell: bash
+        run: |
+          CA_FILE=$(bun scripts/write-ca-bundle.ts)
+          bun install --frozen-lockfile --cafile "$CA_FILE"
 
       - name: Check
         run: bun run check
@@ -25,4 +28,4 @@ jobs:
         run: bun scripts/check-tls.ts
 
       - name: Build
-        run: bun build --compile --compile-executable-path="$(command -v bun)" --minify --bytecode --target=bun-linux-x64 src/index.ts --outfile dist/genmedia
+        run: bun build --compile --compile-executable-path="$(bun -p "process.execPath")" --minify --bytecode --target=bun-linux-x64 src/index.ts --outfile dist/genmedia

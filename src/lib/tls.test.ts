@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { cleanCertificates, secureFetch } from "./tls";
+import { rootCertificates } from "node:tls";
+import { fileURLToPath } from "node:url";
+import { cleanCertificates, secureFetch, trustedCertificates } from "./tls";
 
 const nativeFetch = globalThis.fetch;
 const g3 = readFileSync(
@@ -11,9 +13,7 @@ const aaa = readFileSync(
   new URL("./fixtures/aaa.pem", import.meta.url),
   "utf8",
 );
-const good = cleanCertificates(
-  readFileSync(new URL("./public-ca-bundle.pem", import.meta.url), "utf8"),
-)[0];
+const good = cleanCertificates(rootCertificates.join("\n"))[0];
 
 afterEach(() => {
   globalThis.fetch = nativeFetch;
@@ -28,6 +28,28 @@ describe("exclusive certificate trust", () => {
     expect(() => cleanCertificates("not a certificate")).toThrow(
       "no PEM certificates",
     );
+  });
+
+  test.each([
+    "/nonexistent/genmedia-test-ca.pem",
+    fileURLToPath(new URL("../../package.json", import.meta.url)),
+  ])("an obsolete or non-PEM extra CA file does not disable public HTTPS: %s", (filename) => {
+    const old = process.env.NODE_EXTRA_CA_CERTS;
+    const warn = console.warn;
+    const warnings: string[] = [];
+    try {
+      console.warn = (message: string) => {
+        warnings.push(message);
+      };
+      process.env.NODE_EXTRA_CA_CERTS = filename;
+      expect(trustedCertificates()).toContain(good);
+      expect(trustedCertificates()).toContain(good);
+      expect(warnings).toHaveLength(1);
+    } finally {
+      if (old === undefined) delete process.env.NODE_EXTRA_CA_CERTS;
+      else process.env.NODE_EXTRA_CA_CERTS = old;
+      console.warn = warn;
+    }
   });
 
   test("keeps explicit client CA selection and certificate verification", async () => {
