@@ -1,6 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { loadConfig } from "./config";
 import { error } from "./output";
+import { secureFetch } from "./tls";
 
 export const PLATFORM_BASE = "https://api.fal.ai/v1";
 
@@ -20,7 +21,7 @@ export function getApiKey(): string {
 }
 
 export function configureSDK(): void {
-  fal.config({ credentials: getApiKey() });
+  fal.config({ credentials: getApiKey(), fetch: secureFetch });
 }
 
 export function platformHeaders(): Record<string, string> {

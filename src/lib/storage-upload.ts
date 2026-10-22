@@ -5,6 +5,7 @@ import { fal } from "@fal-ai/client";
 import { configureSDK } from "./api";
 import { MIME_TYPES } from "./mime";
 import { error } from "./output";
+import { secureFetch } from "./tls";
 
 // Uploads a local file path or remote URL to fal storage and returns the
 // fal CDN URL. Configures the SDK as a side effect.
@@ -12,7 +13,7 @@ export async function uploadToFalStorage(target: string): Promise<string> {
   configureSDK();
 
   if (target.startsWith("http://") || target.startsWith("https://")) {
-    const response = await fetch(target);
+    const response = await secureFetch(target);
     if (!response.ok) error(`Failed to fetch ${target}: ${response.status}`);
     const blob = await response.blob();
     const name = target.split("/").pop() || "upload";

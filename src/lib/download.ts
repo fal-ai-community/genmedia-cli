@@ -2,6 +2,7 @@ import { existsSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, resolve } from "node:path";
 import { MIME_TYPES } from "./mime";
+import { secureFetch } from "./tls";
 
 export type MediaRef = {
   url: string;
@@ -230,7 +231,7 @@ export async function downloadMedia(opts: {
 
   await runPool(plans, CONCURRENCY, async ({ ref, target }) => {
     try {
-      const res = await fetch(ref.url);
+      const res = await secureFetch(ref.url);
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`);
       }

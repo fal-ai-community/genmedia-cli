@@ -7,6 +7,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { secureFetch } from "./tls";
 
 const DEFAULT_REGISTRY_URL =
   "https://raw.githubusercontent.com/fal-ai-community/skills/refs/heads/main/skills";
@@ -91,7 +92,7 @@ export function resolveSkillsBase(cwd: string): string | null {
 }
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url, {
+  const res = await secureFetch(url, {
     headers: { "User-Agent": "genmedia-cli" },
   });
   if (!res.ok) {

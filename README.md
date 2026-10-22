@@ -218,6 +218,63 @@ The `run` and `status --download` responses include the gallery info too:
 | `GENMEDIA_SESSION_ID=<anchor>` | Force a specific session id (any string; it's hashed into the on-disk slug). |
 | `GENMEDIA_GALLERY_RETENTION_DAYS=<n>` | Prune session directories older than `n` days (default: 60). |
 
+### Certificate security update (0.7.1)
+
+The 0.7.1 source prepares replacements for all five compiled platforms after the
+eMudhra certificate incident. Bun's default roots still require remediation.
+The CLI supplies an exclusive clean CA store to each HTTP client, including
+the fal SDK, analytics, downloads, and the updater. Certificate verification
+stays enabled. Explicit private CA files remain supported through
+`NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, and per-request TLS configuration.
+The CLI removes affected public roots from those files before use.
+
+Source builds require the pinned Bun 1.4.3. Bun 1.3.11 does not enforce the
+same CA override, so the CLI refuses network access on that older runtime.
+The public CA list comes from the compiled Bun runtime and is filtered by
+fingerprint before each client uses it. No public CA snapshot is vendored.
+Missing or invalid extra CA files produce one warning and fall back to the
+filtered public store; explicit per-request CA settings still fail closed.
+
+```bash
+CA_FILE=$(bun scripts/write-ca-bundle.ts)
+bun install --frozen-lockfile --cafile "$CA_FILE"
+bun run build
+bun scripts/check-tls.ts
+```
+
+Release jobs build and run the certificate probe with each platform's native
+Bun executable. They use the already-installed executable for compilation,
+which avoids a separate compiler-runtime download.
+
+After 0.7.1 is published, explicitly replace older installations. The command
+below runs inside the installed binary: **0.7.0's updater still uses its old
+trust store**. It cannot establish a secure upgrade path during this incident;
+its downloaded checksum uses that same connection and is not independent proof.
+Prefer a replacement downloaded with a patched acquisition tool. Compare its
+SHA-256 with a value obtained independently from the publisher before running
+it. The release must publish those platform hashes through a separate trusted
+channel/site as well as the GitHub checksums file. Candidate hashes from earlier
+builds are invalid after source changes.
+
+If using the old updater, understand that limitation:
+
+```bash
+genmedia update --force
+genmedia version
+```
+
+Automatic updates do not cover clients with `GENMEDIA_NO_UPDATE=1`, disabled
+`autoUpdate`, or non-interactive use. Replace those installations explicitly.
+Before acquisition or reinstallation, update the native certificate store used
+by curl, wget, or PowerShell. A patched CLI does not correct those separate
+installer clients or the initial request that downloads an installer script.
+Keep private CA settings and TLS verification enabled.
+
+The separate Next.js server selects Node 22 and removes affected roots at
+startup, including on a provider patch that predates the fixed Node release.
+Deployment verification must still record the actual provider runtime and
+test both affected chain families from that deployed server.
+
 ### `update` — Check for and apply updates
 
 ```bash

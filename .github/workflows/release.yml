@@ -55,7 +55,10 @@ jobs:
           bun-version-file: .bun-version
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        shell: bash
+        run: |
+          CA_FILE=$(bun scripts/write-ca-bundle.ts)
+          bun install --frozen-lockfile --cafile "$CA_FILE"
 
       - name: Extract version info
         id: version
@@ -84,10 +87,17 @@ jobs:
         run: |
           bun run scripts/gen-version.ts
           bun build --compile --minify --bytecode \
+            --compile-executable-path="$(bun -p "process.execPath")" \
             --target=${{ matrix.target }} \
             --define "__POSTHOG_KEY__=\"${POSTHOG_KEY:-}\"" \
             src/index.ts \
             --outfile dist/${{ matrix.artifact }}
+
+      - name: Verify certificate trust in the compiled runtime
+        shell: bash
+        run: |
+          bun build --compile --minify --bytecode --compile-executable-path="$(bun -p "process.execPath")" --target=${{ matrix.target }} scripts/check-tls.ts --outfile dist/tls-probe${{ runner.os == 'Windows' && '.exe' || '' }}
+          ./dist/tls-probe${{ runner.os == 'Windows' && '.exe' || '' }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

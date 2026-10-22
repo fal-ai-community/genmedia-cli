@@ -4,6 +4,7 @@ import { PLATFORM_BASE, platformHeaders } from "../lib/api";
 import { collectOptionValues } from "../lib/cli-args";
 import { classifyModality, modalityToCategory } from "../lib/modality";
 import { error, output } from "../lib/output";
+import { secureFetch } from "../lib/tls";
 
 const SUPPORTED_EXPANDS = new Set(["openapi-3.0", "enterprise_status"]);
 
@@ -153,7 +154,9 @@ export default defineCommand({
       url.searchParams.append("expand", value);
     }
 
-    const res = await fetch(url.toString(), { headers: platformHeaders() });
+    const res = await secureFetch(url.toString(), {
+      headers: platformHeaders(),
+    });
     if (!res.ok) error(`Failed (${res.status})`, await res.text());
 
     const data = (await res.json()) as ModelsResponse;

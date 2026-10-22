@@ -12,6 +12,7 @@ import {
 import { dirname } from "node:path";
 import { track } from "./analytics";
 import { loadConfig, saveConfig } from "./config";
+import { secureFetch } from "./tls";
 import { VERSION } from "./version";
 
 const GITHUB_REPO = "fal-ai-community/genmedia-cli";
@@ -169,7 +170,7 @@ export function compareSemver(a: string, b: string): number {
 }
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url, {
+  const res = await secureFetch(url, {
     headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
   });
   if (!res.ok) throw new Error(`${url} → ${res.status} ${res.statusText}`);
@@ -177,7 +178,7 @@ async function fetchText(url: string): Promise<string> {
 }
 
 async function fetchBinary(url: string): Promise<Buffer> {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
+  const res = await secureFetch(url, { headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`${url} → ${res.status} ${res.statusText}`);
   return Buffer.from(await res.arrayBuffer());
 }

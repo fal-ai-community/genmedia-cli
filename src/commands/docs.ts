@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
 import { error, output } from "../lib/output";
+import { secureFetch } from "../lib/tls";
 
 export default defineCommand({
   meta: {
@@ -10,7 +11,7 @@ export default defineCommand({
     query: { type: "positional", required: true, description: "Search query" },
   },
   async run({ args }) {
-    const res = await fetch("https://docs.fal.ai/mcp", {
+    const res = await secureFetch("https://docs.fal.ai/mcp", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { PLATFORM_BASE, platformHeaders } from "./api";
+import { secureFetch } from "./tls";
 
 export interface ModelSchemaFetchResult {
   model: Record<string, unknown>;
@@ -28,7 +29,7 @@ export async function fetchModelSchema(
 
   let res: Response;
   try {
-    res = await fetch(url.toString(), { headers: platformHeaders() });
+    res = await secureFetch(url.toString(), { headers: platformHeaders() });
   } catch (err) {
     return {
       ok: false,
