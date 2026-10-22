@@ -4,6 +4,7 @@ import {
   saveConfig,
 } from "./config";
 import type { Modality } from "./modality";
+import { secureFetch } from "./tls";
 
 const MANIFEST_URL =
   process.env.GENMEDIA_DEFAULTS_URL ?? "https://genmedia.sh/defaults.json";
@@ -100,7 +101,7 @@ async function fetchManifest(): Promise<DefaultsManifest | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(MANIFEST_URL, {
+    const res = await secureFetch(MANIFEST_URL, {
       signal: controller.signal,
       headers: { "User-Agent": "genmedia-cli" },
     });

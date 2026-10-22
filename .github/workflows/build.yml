@@ -12,12 +12,17 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --cafile src/lib/public-ca-bundle.pem
 
       - name: Check
         run: bun run check
 
+      - name: Verify certificate trust
+        run: bun scripts/check-tls.ts
+
       - name: Build
-        run: bun build --compile --minify --bytecode --target=bun-linux-x64 src/index.ts --outfile dist/genmedia
+        run: bun build --compile --compile-executable-path="$(command -v bun)" --minify --bytecode --target=bun-linux-x64 src/index.ts --outfile dist/genmedia

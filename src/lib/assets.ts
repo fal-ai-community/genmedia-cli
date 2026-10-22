@@ -1,6 +1,7 @@
 import { track } from "./analytics";
 import { PLATFORM_BASE, platformHeaders } from "./api";
 import { error } from "./output";
+import { secureFetch } from "./tls";
 
 export const ASSETS_BASE = `${PLATFORM_BASE}/assets`;
 
@@ -59,7 +60,7 @@ export async function assetsRequest<T = unknown>(
   }
 
   const start = performance.now();
-  const res = await fetch(url.toString(), {
+  const res = await secureFetch(url.toString(), {
     method: opts.method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,

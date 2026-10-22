@@ -1,6 +1,7 @@
 import { getCallerInfo } from "./caller";
 import { getOrCreateInstallationId, loadConfig } from "./config";
 import { getOutputMode } from "./output";
+import { secureFetch } from "./tls";
 import { VERSION } from "./version";
 
 // Replaced at build time by `bun build --define __POSTHOG_KEY__='"phc_xxx"'`.
@@ -53,6 +54,7 @@ export function initAnalytics(): void {
         host: POSTHOG_HOST,
         flushAt: 1,
         flushInterval: 0,
+        fetch: secureFetch,
       }) as unknown as PostHogClient;
 
       _superProps = {
