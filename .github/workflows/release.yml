@@ -16,6 +16,12 @@ on:
         type: boolean
         default: true
 
+      verify_published:
+        description: "Verify public installers and published binary trust (dry runs only)"
+        required: false
+        type: boolean
+        default: false
+
 permissions:
   contents: write
 
@@ -98,6 +104,32 @@ jobs:
         run: |
           bun build --compile --minify --bytecode --compile-executable-path="$(bun -p "process.execPath")" --target=${{ matrix.target }} scripts/check-tls.ts --outfile dist/tls-probe${{ runner.os == 'Windows' && '.exe' || '' }}
           ./dist/tls-probe${{ runner.os == 'Windows' && '.exe' || '' }}
+
+      - name: Verify public shell installer
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && inputs.verify_published && runner.os != 'Windows' }}
+        shell: bash
+        env:
+          GENMEDIA_VERSION: ${{ inputs.version }}
+          GENMEDIA_DIR: ${{ runner.temp }}/genmedia-public-install
+        run: |
+          export CURL_CA_BUNDLE="$(bun scripts/write-ca-bundle.ts)"
+          export PATH="$GENMEDIA_DIR/bin:$PATH"
+          curl -fsSL https://genmedia.sh/install.sh -o "$RUNNER_TEMP/genmedia-install.sh"
+          sh "$RUNNER_TEMP/genmedia-install.sh"
+          bun scripts/check-published-install.ts "$GENMEDIA_DIR/bin/genmedia" "${{ matrix.platform }}" "$GENMEDIA_VERSION"
+
+      - name: Verify public PowerShell installer
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && inputs.verify_published && runner.os == 'Windows' }}
+        shell: pwsh
+        env:
+          GENMEDIA_VERSION: ${{ inputs.version }}
+          GENMEDIA_DIR: ${{ runner.temp }}/genmedia-public-install
+        run: |
+          Invoke-WebRequest https://genmedia.sh/install.ps1 -OutFile "$env:RUNNER_TEMP/genmedia-install.ps1"
+          & "$env:RUNNER_TEMP/genmedia-install.ps1"
+          if (-not $?) { throw "Public installer failed" }
+          bun scripts/check-published-install.ts "$env:GENMEDIA_DIR/bin/genmedia.exe" "${{ matrix.platform }}" "$env:GENMEDIA_VERSION"
+          if ($LASTEXITCODE -ne 0) { throw "Published binary verification failed" }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
