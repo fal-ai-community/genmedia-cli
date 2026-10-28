@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import {
   type GalleryPaths,
   galleryPaths,
+  isValidSessionId,
   readLastSession,
   resolveLatestSessionId,
   rootIndexPath,
@@ -54,7 +55,7 @@ export type ResolvedTarget = ResolvedSessionTarget | ResolvedIndexTarget;
 
 export interface TargetResolveError {
   kind: "error";
-  reason: "latest-empty";
+  reason: "latest-empty" | "invalid-session-id";
   message: string;
 }
 
@@ -107,6 +108,13 @@ export function resolveTarget(
   // Anything else is treated as an explicit session id. We don't validate
   // the id exists here — callers report `exists: false` so an agent can
   // distinguish "typo" from "empty".
+  if (!isValidSessionId(target)) {
+    return {
+      kind: "error",
+      reason: "invalid-session-id",
+      message: `Invalid session id: ${target}`,
+    };
+  }
   return {
     kind: "session",
     source: "explicit",

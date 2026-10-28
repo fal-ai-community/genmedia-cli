@@ -59,6 +59,14 @@ const MAX_SESSION_PREVIEWS = 4;
 const MAX_LABEL_LENGTH = 80;
 const DEFAULT_RETENTION_DAYS = 60;
 
+// Session ids are generated as hex slugs (see hashSessionAnchor), so a valid
+// id is always a single plain path segment under sessions/.
+const SESSION_ID_RE = /^[A-Za-z0-9_-]+$/;
+
+export function isValidSessionId(sessionId: string): boolean {
+  return SESSION_ID_RE.test(sessionId);
+}
+
 export interface GalleryPaths {
   session_id: string;
   dir: string;
@@ -154,6 +162,9 @@ function ensureDir(path: string): void {
 }
 
 export function galleryPaths(sessionId: string): GalleryPaths {
+  if (!isValidSessionId(sessionId)) {
+    throw new Error(`Invalid gallery session id: ${sessionId}`);
+  }
   const dir = join(sessionsDir(), sessionId);
   const indexPath = join(dir, PAGE_FILE);
   return {
@@ -290,7 +301,7 @@ export function listSessions(): SessionSummary[] {
   if (!existsSync(dir)) return [];
   const out: SessionSummary[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
+    if (!entry.isDirectory() || !isValidSessionId(entry.name)) continue;
     const paths = galleryPaths(entry.name);
     const payload = readSessionPayload(paths);
     if (!payload) continue;
@@ -341,9 +352,8 @@ function writeLastSession(value: LastSessionPointer): void {
 // missing or stale.
 export function resolveLatestSessionId(): string | null {
   const last = readLastSession();
-  if (last?.session_id) {
-    const dir = join(sessionsDir(), last.session_id);
-    if (existsSync(dir)) return last.session_id;
+  if (last?.session_id && isValidSessionId(last.session_id)) {
+    if (existsSync(galleryPaths(last.session_id).dir)) return last.session_id;
   }
   const sessions = listSessions();
   return sessions[0]?.session_id ?? null;
@@ -491,7 +501,7 @@ export function clearGallery(opts: ClearOptions = {}): ClearResult {
   }
 
   if (opts.sessionId) {
-    const dir = join(sessions, opts.sessionId);
+    const dir = galleryPaths(opts.sessionId).dir;
     if (existsSync(dir)) {
       try {
         rmSync(dir, { recursive: true, force: true });

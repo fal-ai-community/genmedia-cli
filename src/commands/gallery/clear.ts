@@ -2,6 +2,7 @@ import { defineCommand } from "citty";
 import {
   clearGallery,
   galleryPaths,
+  isValidSessionId,
   resolveLatestSessionId,
 } from "../../lib/gallery";
 import { error, output } from "../../lib/output";
@@ -66,6 +67,11 @@ export default defineCommand({
       sessionId = getSessionContext().id;
       resolvedSource = "current";
     } else {
+      if (!isValidSessionId(target)) {
+        error(`Invalid session id: ${target}`, {
+          hint: "Use `genmedia gallery list` to see recorded sessions.",
+        });
+      }
       sessionId = target;
       resolvedSource = "explicit";
     }
