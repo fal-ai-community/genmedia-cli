@@ -15,6 +15,7 @@ import {
   getRegistryUrl,
   type InstalledSkill,
   type InstalledTarget,
+  isValidSkillName,
   readInstalledManifest,
   removeInstalled,
   removeSkillDir,
@@ -83,6 +84,10 @@ export async function installSkill(
     error(`Skill '${name}' not found in registry`, {
       available: index.skills.map((s) => s.name),
     });
+  }
+  if (!isValidSkillName(entry.name)) {
+    if (ownSpinner) spinner.fail(`Invalid skill name: ${entry.name}`);
+    error(`Registry entry has an invalid skill name: ${entry.name}`);
   }
 
   let manifest = readInstalledManifest(cwd);
@@ -181,6 +186,9 @@ export async function uninstallSkill(
   cwd: string,
   name: string,
 ): Promise<UninstallResult> {
+  if (!isValidSkillName(name)) {
+    error(`Invalid skill name: ${name}`);
+  }
   const base = resolveSkillsBase(cwd);
   let manifest = readInstalledManifest(cwd);
   const entry = manifest.skills.find((s) => s.name === name);

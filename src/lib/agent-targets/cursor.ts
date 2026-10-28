@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { sha256 } from "../skills-registry";
+import { isValidSkillName, sha256 } from "../skills-registry";
 import type {
   AgentTarget,
   SkillContent,
@@ -12,6 +12,9 @@ import type {
 const CURSOR_RULES_DIR = ".cursor/rules";
 
 function rulePath(skillName: string): string {
+  if (!isValidSkillName(skillName)) {
+    throw new Error(`Invalid skill name: ${skillName}`);
+  }
   return join(CURSOR_RULES_DIR, `${skillName}.mdc`);
 }
 

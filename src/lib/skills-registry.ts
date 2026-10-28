@@ -134,6 +134,21 @@ export function sha256(body: string): string {
   return createHash("sha256").update(body, "utf-8").digest("hex");
 }
 
+// Skill names become directory and file names under the agent roots, so they
+// must be a single plain path segment.
+const SKILL_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+export function isValidSkillName(name: string): boolean {
+  return SKILL_NAME_RE.test(name);
+}
+
+function skillDir(cwd: string, base: string, skill: string): string {
+  if (!isValidSkillName(skill)) {
+    throw new Error(`Invalid skill name: ${skill}`);
+  }
+  return join(cwd, base, skill);
+}
+
 function resolveInsideRoot(root: string, relPath: string): string {
   const absRoot = resolve(root);
   const target = resolve(absRoot, relPath);
@@ -150,7 +165,7 @@ export function writeSkillFiles(
   skill: string,
   files: Array<{ path: string; content: string }>,
 ): string {
-  const skillRoot = join(cwd, base, skill);
+  const skillRoot = skillDir(cwd, base, skill);
   if (existsSync(skillRoot)) {
     rmSync(skillRoot, { recursive: true, force: true });
   }
@@ -169,7 +184,7 @@ export function removeSkillDir(
   base: string,
   skill: string,
 ): boolean {
-  const skillRoot = join(cwd, base, skill);
+  const skillRoot = skillDir(cwd, base, skill);
   if (!existsSync(skillRoot)) return false;
   rmSync(skillRoot, { recursive: true, force: true });
   return true;
