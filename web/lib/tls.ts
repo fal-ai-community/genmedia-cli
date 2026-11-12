@@ -17,7 +17,7 @@ export function configureCertificateTrust(): void {
   const api = tls as CertificateAPI;
   if (!api.getCACertificates || !api.setDefaultCACertificates) {
     throw new Error(
-      "The web server requires a supported Node 22 runtime with certificate-store APIs",
+      "The web server requires a supported Node 26 runtime with certificate-store APIs",
     );
   }
   const current = api.getCACertificates("default");

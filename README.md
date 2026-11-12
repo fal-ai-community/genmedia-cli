@@ -270,7 +270,7 @@ by curl, wget, or PowerShell. A patched CLI does not correct those separate
 installer clients or the initial request that downloads an installer script.
 Keep private CA settings and TLS verification enabled.
 
-The separate Next.js server selects Node 22 and removes affected roots at
+The separate Next.js server selects Node 26 and removes affected roots at
 startup, including on a provider patch that predates the fixed Node release.
 Deployment verification must still record the actual provider runtime and
 test both affected chain families from that deployed server.
